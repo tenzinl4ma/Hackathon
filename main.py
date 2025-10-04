@@ -96,7 +96,7 @@ Place a Wind Farm next. Emissions are rising and clean generation lowers air imp
 Build a High-Rise Complex. Water and air are stable; densify to grow population with lower per-capita impact than suburbs.
 Hold. You are short on water and clean power; secure one of them before adding demand.
 The data is below:
-{data.content}'''}],
+{data["content"]}'''}],
                 "max_tokens": data.get("max_tokens", 60),
                 "temperature": data.get("temperature", 0.7)
             },
