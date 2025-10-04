@@ -4,10 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tokyo Urban Planner 3D - Sustainable City Design</title>
-    <script src="./buildings.js"></script>
+    <script src="{{ url_for('static', filename='buildings.js') }}"></script>
+    <script src="./building.js"></script>
     <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
     <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
     <style>
+
+        /* 2 items per row in the Building Catalog */
+#building-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;            /* spacing between cards */
+}
+
+
+/* grid handles spacing, so drop the bottom margin */
+#building-list .building-item {
+  margin-bottom: 0;
+}
+
+/* (optional) fall back to 1 column on small screens */
+@media (max-width: 640px) {
+  #building-list {
+    grid-template-columns: 1fr;
+  }
+}
+
         * {
             margin: 0;
             padding: 0;
@@ -143,15 +165,13 @@
         }
 
         .metric-box {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 12px;
+            padding: 8px;        /* was 12px */
+            border-radius: 6px;  /* was 8px */
         }
 
         .metric-label {
             color: #64748b;
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             margin-bottom: 4px;
             display: flex;
@@ -160,7 +180,7 @@
         }
 
         .metric-value {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             color: #e2e8f0;
         }
@@ -281,12 +301,16 @@
         }
 
         .building-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            font-size: 12px;
-            color: #94a3b8;
+        display: grid;
+        grid-template-columns: 1fr;          /* one column */
+        grid-template-rows: repeat(3, auto); /* three rows */
+        gap: 8px;
+        font-size: 12px;
+        color: #94a3b8;
+        align-items: start;
         }
+
+
 
         .stat-positive {
             color: #10b981;
@@ -539,98 +563,137 @@
     </div>
 
     <div id="app">
-        <div id="sidebar">
-            <div class="sidebar-content">
-                <div class="header">
-                    <h1>
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                        </svg>
-                        Tokyo Urban Planner 3D
-                    </h1>
-                    <p>Design sustainable urban environments with real NASA data</p>
-                </div>
+<!-- LEFT SIDEBAR (no Building Catalog) -->
+<div id="sidebar">
+  <div class="sidebar-content">
+    <div class="header">
+      <h1>
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        Tokyo Urban Planner 3D
+      </h1>
+      <p>Design sustainable urban environments with real NASA data</p>
+    </div>
 
-                <div class="card">
-                    <div class="card-title">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
-                        </svg>
-                        Sustainability Dashboard
-                    </div>
-                    
-                    <div class="score-display">
-                        <div class="score-value" id="score">72</div>
-                        <div class="score-label">Overall Score</div>
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="score-bar" style="width: 72%"></div>
-                        </div>
-                    </div>
-
-                    <div class="metrics-grid">
-                        <div class="metric-box">
-                            <div class="metric-label">
-                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
-                                </svg>
-                                Carbon
-                            </div>
-                            <div class="metric-value" id="carbon">118k</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-label">
-                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
-                                </svg>
-                                Green Space
-                            </div>
-                            <div class="metric-value" id="green">22%</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-label">
-                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
-                                </svg>
-                                Air Quality
-                            </div>
-                            <div class="metric-value" id="aqi">42</div>
-                        </div>
-                        <div class="metric-box">
-                            <div class="metric-label">
-                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                                </svg>
-                                Population
-                            </div>
-                            <div class="metric-value" id="population">842k</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        NASA Earth Data Layers
-                    </div>
-                    
-                    <div id="layer-toggles"></div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                        </svg>
-                        Building Catalog
-                    </div>
-                    
-                    <div id="building-list"></div>
-                </div>
-            </div>
+    <div class="card">
+      <div class="card-title">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+        </svg>
+        Sustainability Dashboard
+      </div>
+      
+      <div class="score-display">
+        <div class="score-value" id="score">72</div>
+        <div class="score-label">Sustainability Score</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="score-bar" style="width: 72%"></div>
         </div>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+            </svg>
+            Net water (m³)
+          </div>
+          <div class="metric-value" id="water">0</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+            </svg>
+            Money
+          </div>
+          <div class="metric-value" id="money">0</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+            </svg>
+            Happiness
+          </div>
+          <div class="metric-value" id="happiness">0</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+            </svg>
+            Net Energy (kW)
+          </div>
+          <div class="metric-value" id="energy">0</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+            </svg>
+            Air Quality
+          </div>
+          <div class="metric-value" id="aqi">0</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            Population
+          </div>
+          <div class="metric-value" id="population">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        NASA Earth Data Layers
+      </div>
+      <div id="layer-toggles"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT SIDEBAR (Building Catalog moved here) -->
+<div id="rightbar">
+  <div class="sidebar-content">
+    <div class="card">
+      <div class="card-title">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        Building Catalog
+      </div>
+      <div id="building-list"></div>
+    </div>
+  </div>
+</div>
+
 
         <div id="map-container">
             <div id="map"></div>
@@ -714,8 +777,8 @@
             score: 72,
             carbon: 118000,
             green: 22,
-            aqi: 42,
-            population: 842000,
+            air: 42,
+            population: 342000,
             activeLayers: {},
             placedBuildings: [],
             warnings: []
@@ -836,11 +899,15 @@
                     type: 'raster',
                     source: {
                         type: 'raster',
-                        tiles: [`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Aerosol/default/2024-01-01/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`],
-                        tileSize: 256
+                        tiles: [
+                        '/pm25_tiles_tokyo/{z}/{x}/{y}.png'
+                        ],
+                        tileSize: 256,
+                        minzoom: 10,
+                        maxzoom: 12,
                     },
                     paint: {
-                        'raster-opacity': 0
+                        'raster-opacity': 1
                     }
                 });
             });
@@ -897,25 +964,26 @@ window.buildingRegistry = window.buildingRegistry || [];
 
         function renderBuildings() {
             const container = document.getElementById('building-list');
-            container.innerHTML = buildings.map(building => `
-                <div class="building-item" 
-                     draggable="true"
-                     data-building-id="${building.id}"
-                     onclick="selectBuilding('${building.id}')">
-                    <div class="building-header">
-                        <span style="font-size: 24px;">${building.icon}</span>
-                        <span class="building-name">${building.name}</span>
-                    </div>
-                    <div class="building-stats">
-                        <div>💰 Cost: ${building.cost}M</div>
-                        <div class="${building.carbon < 0 ? 'stat-positive' : 'stat-negative'}">
-                            ${building.carbon < 0 ? '🌱' : '☁️'} Carbon: ${building.carbon > 0 ? '+' : ''}${building.carbon}t
-                        </div>
-                        ${building.pop > 0 ? `<div>👥 Pop: +${building.pop}</div>` : '<div></div>'}
-                        <div>📏 Height: ${building.height}m</div>
-                    </div>
-                </div>
-            `).join('');
+container.innerHTML = buildings.map(building => `
+  <div class="building-item"
+      draggable="true"
+      data-building-id="${building.id}"
+      onclick="selectBuilding('${building.id}', this)">
+    <div class="building-header">
+      <span style="font-size: 24px;">${building.icon}</span>
+      <span class="building-name">${building.name}</span>
+      ${building.pop > 0 ? `<span style="margin-left:auto;font-size:12px;background:#0f172a66;border:1px solid #334155;border-radius:8px;padding:2px 6px;">👥 +${building.pop}</span>` : ''}
+    </div>
+
+    <div class="building-stats">
+      <div>💰 Cost: ${building.cost}M</div>
+      <div class="${building.carbon < 0 ? 'stat-positive' : 'stat-negative'}">
+        ${building.carbon < 0 ? '🌱' : '☁️'} Carbon: ${building.carbon > 0 ? '+' : ''}${building.carbon}t
+      </div>
+      <div>📏 Height: ${building.height}m</div>
+    </div>
+  </div>
+`).join('');
 
             // Add drag event listeners
             document.querySelectorAll('.building-item').forEach(item => {
@@ -1000,37 +1068,7 @@ function getNearbyBuildings(lngLat, radiusMeters = 500) {
 
 
         /*Tenzin shit 2*/
-        function checkAndAddWarnings(building, lngLat) {
-    // Example 1: Too many industrial buildings nearby → air quality warning
-    const nearby = getNearbyBuildings(lngLat, 400); // within 400m
-    const industrialCount = nearby.filter(p => p.building.id.includes('industrial')).length;
-    if (industrialCount >= 2 && building.id.includes('industrial')) {
-        addWarning('⚠️ High industrial density detected. Risk of elevated air pollution.');
-    }
-
-    // Example 2: Placing residential without nearby services
-    if (building.id.includes('residential')) {
-        const hasNearbyService = nearby.some(p => 
-            p.building.id.includes('service') || p.building.id.includes('transport')
-        );
-        if (!hasNearbyService) {
-            addWarning('🏘️ New residential area lacks nearby schools, hospitals, or transit.');
-        }
-    }
-
-    // Example 3: Low green space ratio
-    if (state.green < 15 && building.carbon > 0) {
-        addWarning('🌳 Green space below 15%. Add parks or urban forests to improve sustainability.');
-    }
-
-    // Example 4: High population density
-    const popDensity = state.population / 100; // rough proxy (Tokyo area ~100 km² in sim)
-    if (popDensity > 15000 && building.pop > 0) {
-        addWarning('👥 Population density exceeds 15,000/km². Consider expanding transit access.');
-    }
-}
-
-
+    
         // Helper (add once near your other utils)
 function metersToDegreeDeltas(meters, latDeg) {
   const dLat = meters / 111320; // ~111.32 km per degree of latitude
@@ -1068,7 +1106,7 @@ function showBuildingPopup(buildingId, atLngLat) {
     .addTo(map);
 }
 
-    // Modified placeBuilding
+
    // Modified placeBuilding
 function placeBuilding(building, lngLat) {
   // Unique id FIRST so we can bind events to it
@@ -1166,7 +1204,8 @@ function placeBuilding(building, lngLat) {
 
   // Metrics + warnings
   updateMetrics(building);
-  checkAndAddWarnings(building, lngLat);
+
+addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
 
   // Reset selection
   state.selectedBuilding = null;
@@ -1190,20 +1229,20 @@ function placeBuilding(building, lngLat) {
             // Update green space
             if (building.carbon < 0) {
                 state.green += 2;
-                state.aqi = Math.max(0, state.aqi - 3);
+                state.air = Math.max(0, state.air - 3);
             } else if (building.carbon > 200) {
                 state.green = Math.max(0, state.green - 1);
-                state.aqi = Math.min(500, state.aqi + 5);
+                state.air = Math.min(500, state.air + 5);
             }
             document.getElementById('green').textContent = `${state.green}%`;
-            document.getElementById('aqi').textContent = state.aqi;
+            document.getElementById('air').textContent = state.air;
             
             // Update overall score
             const carbonScore = Math.max(0, 100 - (state.carbon / 2000));
             const greenScore = state.green * 1.2;
-            const aqiScore = Math.max(0, 100 - state.aqi);
+            const airScore = Math.max(0, 100 - state.air);
             
-            state.score = Math.floor((carbonScore + greenScore + aqiScore) / 3);
+            state.score = Math.floor((carbonScore + greenScore + airScore) / 3);
             state.score = Math.max(0, Math.min(100, state.score));
             
             document.getElementById('score').textContent = state.score;
@@ -1238,34 +1277,40 @@ function placeBuilding(building, lngLat) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'llama3-8b-8192',
+                model: 'llama-3.1-8b-instant',  // ✅ Updated model
                 messages: [{
                     role: 'user',
-                    content: 'You are an AI urban planner for Tokyo. Greet the user in one friendly sentence (max 80 characters).'
+                    content: 'You are an AI urban planner for Tokyo. Greet the user in one friendly, concise sentence (max 80 characters). Do not add explanations or prefixes.'
                 }],
-                max_tokens: 30,
+                max_tokens: 50,   // ✅ Increased from 30 → 50
                 temperature: 0.7
             })
         });
-
         const data = await response.json();
-        if (data.error) {
-            console.warn('Greeting failed:', data.error);
-            addWarning("Hello! I'm your AI Urban Planner. 🌆");
+
+        // Handle Groq API errors (e.g., 400, 429, etc.)
+        if (!response.ok || data.error) {
+            console.warn('Groq API error:', data);
+            addWarning("Hello! I'm your AI Urban fsadfPlanner. 🌆");
             return;
         }
 
-        let greeting = data.choices?.[0]?.message?.content?.trim() || "Hello! I'm your AI Urban Planner.";
-        greeting = greeting.replace(/^["'\n]+|["'\n]+$/g, '');
-        if (greeting.length > 100) greeting = greeting.substring(0, 97) + "...";
+        // Extract AI message safely
+        const greeting = data.choices?.[0]?.message?.content?.trim() || "Hello! I'm your AI Urban Pladdfassadfnner. 🌆";
+        // Clean up quotes or extra whitespace
+        const cleanGreeting = greeting.replace(/^["'\n]+|["'\n]+$/g, '');
+        // Enforce length limit
+        const finalGreeting = cleanGreeting.length > 80 
+            ? cleanGreeting.substring(0, 77) + "..." 
+            : cleanGreeting;
 
-        addWarning(greeting);
+        addWarning(finalGreeting);
     } catch (err) {
-        console.warn('AI greeting failed:', err);
+        console.error('AI greeting failed:', err);
         addWarning("Hello! I'm your AI Urban Planner. 🌆");
     }
 }
-
+        
         function updateWarningsDisplay() {
             const container = document.getElementById('warnings');
             const list = document.getElementById('warning-list');
@@ -1284,6 +1329,7 @@ function placeBuilding(building, lngLat) {
                 container.style.display = 'none';
             }
         }
+        
 
         function resetSimulation() {
             if (confirm('Reset entire simulation? This will clear all placed buildings.')) {
@@ -1302,7 +1348,7 @@ function placeBuilding(building, lngLat) {
                     score: 72,
                     carbon: 118000,
                     green: 22,
-                    aqi: 42,
+                    air: 42,
                     population: 842000,
                     activeLayers: {},
                     placedBuildings: [],
@@ -1314,7 +1360,7 @@ function placeBuilding(building, lngLat) {
                 document.getElementById('score-bar').style.width = `${state.score}%`;
                 document.getElementById('carbon').textContent = `${Math.floor(state.carbon / 1000)}k`;
                 document.getElementById('green').textContent = `${state.green}%`;
-                document.getElementById('aqi').textContent = state.aqi;
+                document.getElementById('air').textContent = state.air;
                 document.getElementById('population').textContent = `${Math.floor(state.population / 1000)}k`;
                 
                 updateWarningsDisplay();
@@ -1341,7 +1387,7 @@ SUSTAINABILITY METRICS
 Overall Score: ${state.score}/100
 Carbon Footprint: ${Math.floor(state.carbon / 1000)}k tons/year
 Green Space Ratio: ${state.green}%
-Air Quality Index: ${state.aqi}
+Air Quality Index: ${state.air}
 Population: ${Math.floor(state.population / 1000)}k
 
 ═══════════════════════════════════════
@@ -1369,7 +1415,7 @@ ${state.score > 80 ? '✓ Excellent sustainability! Maintain current practices.'
 ${state.score <= 80 && state.score > 60 ? '• Consider adding more green spaces to improve air quality.' : ''}
 ${state.score <= 60 ? '⚠ Critical improvements needed. Focus on reducing carbon emissions and adding green infrastructure.' : ''}
 ${state.green < 20 ? '⚠ Increase green space ratio to at least 25% for healthy urban environment.' : ''}
-${state.aqi > 70 ? '⚠ Air quality requires immediate attention. Add parks and reduce industrial emissions.' : ''}
+${state.air > 70 ? '⚠ Air quality requires immediate attention. Add parks and reduce industrial emissions.' : ''}
             `.trim();
             
             alert(report);
