@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tokyo Urban Planner 3D - Sustainable City Design</title>
-    <script src="{{ url_for('static', filename='buildings.js') }}"></script>
-    <script src="./building.js"></script>
+    <script src="{{ url_for('static', filename='building.js') }}"></script>
     <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
     <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
     <style>
@@ -103,6 +102,75 @@
 
         .sidebar-content {
             padding: 24px;
+        }
+
+        /* Top Collapsible Building Catalog */
+        #top-catalog {
+            position: fixed;
+            top: 0;
+            left: 300px; /* right next to sidebar */
+            width: 300px; /* same width as sidebar */
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-bottom: 1px solid #334155;
+            border-right: 1px solid #334155;
+            z-index: 50;
+            transition: all 0.3s ease;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        }
+
+        #catalog-header {
+            padding: 14px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+            font-size: 15px;
+            font-weight: 600;
+            background: rgba(30, 41, 59, 0.6);
+            transition: background 0.2s ease;
+        }
+
+        #catalog-header:hover {
+            background: rgba(51, 65, 85, 0.8);
+        }
+
+        #catalog-header svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .chev {
+            margin-left: auto;
+            font-size: 12px;
+            transition: transform 0.3s ease;
+            opacity: 0.7;
+        }
+
+        #top-catalog.collapsed .chev {
+            transform: rotate(-90deg);
+        }
+
+        #catalog-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        #top-catalog:not(.collapsed) #catalog-content {
+            max-height: calc(100vh - 45px);
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        #catalog-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #catalog-content::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
         }
 
         .header {
@@ -710,28 +778,20 @@
   </div>
 </div>
 
-<!-- RIGHT SIDEBAR (Building Catalog moved here) -->
-<div id="rightbar">
-  <div class="sidebar-content">
-    <div class="card" id="catalog-card">
-    <div class="card-title" id="catalog-toggle">
-        <span style="display:flex;align-items:center;gap:8px">
-        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-        </svg>
-        Building Catalog
-        </span>
-        <span class="chev" aria-hidden="true">▾</span>
-    </div>
-
-    <div id="building-list"></div>
-    </div>
-  </div>
-</div>
-
-
         <div id="map-container">
+            <div id="top-catalog" class="collapsed">
+                <div id="catalog-header">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <span>Building Catalogue</span>
+                    <span class="chev">▾</span>
+                </div>
+                <div id="catalog-content">
+                    <div id="building-list"></div>
+                </div>
+            </div>
             <div id="map"></div>
             
             <div class="overlay" id="instructions" style="bottom: 5px; left: auto; top: auto; right: 5px; width: 400px; height: auto; resize: none;">
@@ -910,7 +970,7 @@
         function add3DBuildings() {
             map.addSource('openmaptiles', {
                 type: 'vector',
-                url: 'https://api.maptiler.com/tiles/v3/tiles.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL'
+                url: 'https://api.maptiler.com/tiles/v3/tiles.json?key=viJuvZkevz46XH8SE919'
             });
 
             map.addLayer({
@@ -918,7 +978,6 @@
                 'source': 'openmaptiles',
                 'source-layer': 'building',
                 'type': 'fill-extrusion',
-                'minzoom': 12,
                 'paint': {
                     'fill-extrusion-color': '#2a3f5f',
                     'fill-extrusion-height': ['get', 'render_height'],
@@ -1146,6 +1205,28 @@ function showBuildingPopup(buildingId, atLngLat) {
     .setHTML(html)
     .addTo(map);
 }
+async function runAIUrbanAnalysis() {
+  try {
+
+    const safeList = (window.buildingRegistry || []).map(({ marker, ...rest }) => rest);
+
+    // Turn the array into a string (pretty-printed)
+    const data_string = JSON.stringify(safeList, null, 2);
+
+    const response = await fetch('/groq', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: data_string })
+    });
+
+    // Optional: read response (remove if you truly want to do nothing else)
+    const data = await response.json().catch(() => null);
+    console.log('AI response:', data);
+  } catch (err) {
+    console.error('runAIUrbanAnalysis failed:', err);
+  }
+}
+
 
 
    // Modified placeBuilding
@@ -1231,11 +1312,11 @@ function placeBuilding(building, lngLat) {
     color: building.color,
     cost: building.cost,
     air: building.air,
+    energy: building.energy,
     water: building.water,
     energy: building.energy,
     pop: building.pop,
-    height: heightMeters,
-    dimension: base,
+
     lngLat: { lng: lngLat.lng, lat: lngLat.lat },
     marker
   };
@@ -1254,6 +1335,8 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
   document.querySelectorAll('.building-item').forEach(item => {
     item.style.borderColor = '#334155';
   });
+
+  runAIUrbanAnalysis();
 }
 
 
@@ -1493,8 +1576,8 @@ ${state.air > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
             }
             
             function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
+                document.onmouseup = 0;
+                document.onmousemove = 0;
             }
         }
 
@@ -1506,23 +1589,23 @@ ${state.air > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
             btn.textContent = element.classList.contains('minimized') ? '+' : '−';
         }
     function initCatalogCollapse() {
-    const card = document.getElementById('catalog-card');
-    const toggle = document.getElementById('catalog-toggle');
-    if (!card || !toggle) return;
+        const catalog = document.getElementById('top-catalog');
+        const header = document.getElementById('catalog-header');
+        
+        if (!catalog || !header) return;
 
-    toggle.addEventListener('click', () => {
-        card.classList.toggle('collapsed');
-    });
+        header.addEventListener('click', () => {
+            catalog.classList.toggle('collapsed');
+        });
     }
 
         window.addEventListener('load', () => {
-        initMap();
-        renderLayerToggles();
-        renderBuildings();
-        makeDraggable('instructions');
-        makeDraggable('warnings');
-        makeDraggable('active-layers');
-        initCatalogCollapse(); // <-- was missing ()
+            initMap();
+            renderLayerToggles();
+            renderBuildings();
+            makeDraggable('warnings');
+            makeDraggable('active-layers');
+            initCatalogCollapse(); // Make sure this line exists
         });
 
     </script>
