@@ -9,19 +9,49 @@
     <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
     <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
     <style>
+/* Collapsible catalog */
+#catalog-card .card-title {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#catalog-card .chev {
+  font-size: 12px;
+  opacity: 0.8;
+  transition: transform 0.2s ease;
+}
+
+#catalog-card.collapsed .chev {
+  transform: rotate(-90deg);
+}
+
+/* Hide list when collapsed */
+#catalog-card.collapsed #building-list {
+  display: none;
+}
 
         /* 2 items per row in the Building Catalog */
+/* Make only the Building Catalog list scroll, and keep it 1 column */
 #building-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;            /* spacing between cards */
+  grid-template-columns: 1fr;   /* 1 column */
+  gap: 12px;
+
+  max-height: 100vh;             /* tweak as you like */
+  overflow-y: auto;             /* <-- scroll just the list */
+  -webkit-overflow-scrolling: touch; /* smoother on iOS */
+  padding-right: 6px;           /* room for scrollbar */
 }
 
-
-/* grid handles spacing, so drop the bottom margin */
-#building-list .building-item {
-  margin-bottom: 0;
+/* (optional) slimmer scrollbar styling */
+#building-list::-webkit-scrollbar { width: 8px; }
+#building-list::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
 }
+
 
 /* (optional) fall back to 1 column on small screens */
 @media (max-width: 640px) {
@@ -50,7 +80,7 @@
 
         /* Sidebar */
         #sidebar {
-            width: 380px;
+            width: 300px;
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             overflow-y: auto;
             border-right: 1px solid #334155;
@@ -554,6 +584,8 @@
                 height: 60vh;
             }
         }
+
+        
     </style>
 </head>
 <body>
@@ -681,15 +713,19 @@
 <!-- RIGHT SIDEBAR (Building Catalog moved here) -->
 <div id="rightbar">
   <div class="sidebar-content">
-    <div class="card">
-      <div class="card-title">
+    <div class="card" id="catalog-card">
+    <div class="card-title" id="catalog-toggle">
+        <span style="display:flex;align-items:center;gap:8px">
         <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
         </svg>
         Building Catalog
-      </div>
-      <div id="building-list"></div>
+        </span>
+        <span class="chev" aria-hidden="true">▾</span>
+    </div>
+
+    <div id="building-list"></div>
     </div>
   </div>
 </div>
@@ -962,35 +998,40 @@ window.buildingRegistry = window.buildingRegistry || [];
             }
         }
 
-        function renderBuildings() {
-            const container = document.getElementById('building-list');
-container.innerHTML = buildings.map(building => `
-  <div class="building-item"
-      draggable="true"
-      data-building-id="${building.id}"
-      onclick="selectBuilding('${building.id}', this)">
-    <div class="building-header">
-      <span style="font-size: 24px;">${building.icon}</span>
-      <span class="building-name">${building.name}</span>
-      ${building.pop > 0 ? `<span style="margin-left:auto;font-size:12px;background:#0f172a66;border:1px solid #334155;border-radius:8px;padding:2px 6px;">👥 +${building.pop}</span>` : ''}
-    </div>
-
-    <div class="building-stats">
-      <div>💰 Cost: ${building.cost}M</div>
-      <div class="${building.carbon < 0 ? 'stat-positive' : 'stat-negative'}">
-        ${building.carbon < 0 ? '🌱' : '☁️'} Carbon: ${building.carbon > 0 ? '+' : ''}${building.carbon}t
+function renderBuildings() {
+  const container = document.getElementById('building-list');
+  container.innerHTML = buildings.map(b => `
+    <div class="building-item"
+         style="padding:8px 10px;border-radius:8px;margin-bottom:6px"
+         draggable="true"
+         data-building-id="${b.id}"
+         onclick="selectBuilding('${b.id}', this)">
+      
+      <div class="building-header" style="gap:8px;margin-bottom:6px;align-items:center;">
+        <span style="font-size:18px;line-height:1;">${b.icon}</span>
+        <span class="building-name" style="font-size:13px;font-weight:600;">${b.name}</span>
       </div>
-      <div>📏 Height: ${building.height}m</div>
-    </div>
-  </div>
-`).join('');
 
-            // Add drag event listeners
-            document.querySelectorAll('.building-item').forEach(item => {
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragend', handleDragEnd);
-            });
-        }
+      <div class="building-stats"
+           style="display:grid;grid-template-columns:1fr;row-gap:4px;font-size:11px;line-height:1.2;color:#94a3b8;">
+        ${b.pop > 0 ? `<div>👥 Population: +${b.pop}</div>` : ''}
+           <div>💰 Cost: ${b.cost}M</div>
+        <div class="${b.carbon < 0 ? 'stat-positive' : 'stat-negative'}">
+          ${b.carbon < 0 ? '🌱' : '☁️'} Carbon: ${b.carbon > 0 ? '+' : ''}${b.carbon}t
+        </div>
+        <div>📏 Height: ${b.height}m</div>
+        
+      </div>
+    </div>
+  `).join('');
+
+  // Add drag event listeners
+  document.querySelectorAll('.building-item').forEach(item => {
+    item.addEventListener('dragstart', handleDragStart);
+    item.addEventListener('dragend', handleDragEnd);
+  });
+}
+
 
         function handleDragStart(e) {
             const buildingId = e.currentTarget.getAttribute('data-building-id');
@@ -1464,16 +1505,26 @@ ${state.air > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
             const btn = element.querySelector('.overlay-btn');
             btn.textContent = element.classList.contains('minimized') ? '+' : '−';
         }
+    function initCatalogCollapse() {
+    const card = document.getElementById('catalog-card');
+    const toggle = document.getElementById('catalog-toggle');
+    if (!card || !toggle) return;
 
-        // Initialize on load
+    toggle.addEventListener('click', () => {
+        card.classList.toggle('collapsed');
+    });
+    }
+
         window.addEventListener('load', () => {
-            initMap();
-            renderLayerToggles();
-            renderBuildings();
-            makeDraggable('instructions');
-            makeDraggable('warnings');
-            makeDraggable('active-layers');
+        initMap();
+        renderLayerToggles();
+        renderBuildings();
+        makeDraggable('instructions');
+        makeDraggable('warnings');
+        makeDraggable('active-layers');
+        initCatalogCollapse(); // <-- was missing ()
         });
+
     </script>
 </body>
 </html>
