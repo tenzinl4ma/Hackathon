@@ -66,11 +66,11 @@ The data is below:
             json={
                 "model": data.get("model", "llama-3.1-8b-instant"),
                 "messages": [{"role": "user", "content":
-                              f'''You are Sustainability Advisor for Tokyo Urban Planner 3D.
+                              f'''{data["content"]}'''},
+            {"role": "system", "content": '''You are Sustainability Advisor for Tokyo Urban Planner 3D.
 Inputs:
-• A JSON object named state (e.g., score, population, money, secondsElapsed; missing fields = 0).
-• A field named buildingRegistry that is a JSON array encoded as a string. Parse it. If parsing fails, treat it as an empty array.
-• Each array item has: id, name, type, icon, color, cost, air, energy, water, pop, lngLat. Ignore any “marker” field.
+• A field named buildingRegistry that is a string. 
+• String has: id, name, type, icon, color, cost, air, energy, water, pop, lngLat. Ignore any “marker” field.
 
 Semantics:
 • Positive water/air/energy = net consumption/emissions/demand. Negative = supply/sequestration/generation.
@@ -94,9 +94,7 @@ Examples:
 Add Small Reservoir now. Your net water use is positive; stabilize supply before expanding housing.
 Place a Wind Farm next. Emissions are rising and clean generation lowers air impact without adding water demand.
 Build a High-Rise Complex. Water and air are stable; densify to grow population with lower per-capita impact than suburbs.
-Hold. You are short on water and clean power; secure one of them before adding demand.
-The data is below:
-{data["content"]}'''}],
+Hold. You are short on water and clean power; secure one of them before adding demand.'''}],
                 "max_tokens": data.get("max_tokens", 60),
                 "temperature": data.get("temperature", 0.7)
             },

@@ -998,25 +998,59 @@
         }
 
         function addDataLayers() {
-            layers.forEach(layer => {
-                map.addLayer({
-                    id: layer.id,
-                    type: 'raster',
-                    source: {
-                        type: 'raster',
-                        tiles: [
-                        '/pm25_tiles_tokyo/{z}/{x}/{y}.png'
-                        ],
-                        tileSize: 256,
-                        minzoom: 10,
-                        maxzoom: 12,
+    // Skip raster layers — we’ll use GeoJSON points for air quality
+    fetch('/static/aod.json')
+        .then(response => response.json())
+        .then(data => {
+            // Convert to GeoJSON
+            const geojson = {
+                type: 'FeatureCollection',
+                features: data.data.map(pt => ({
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [pt.lon, pt.lat]  // [lon, lat]!
                     },
-                    paint: {
-                        'raster-opacity': 1
+                    properties: {
+                        aod: pt.aod
                     }
-                });
+                }))
+            };
+
+            // Add source
+            map.addSource('aod-source', {
+                type: 'geojson',
+                data: geojson
             });
-        }
+
+            // Add circle layer with color based on AOD
+            map.addLayer({
+                id: 'airQuality',
+                type: 'circle',
+                source: 'aod-source',
+                paint: {
+                    'circle-radius': 6,
+                    'circle-color': [
+                        'interpolate',
+                        ['linear'],
+                        ['get', 'aod'],
+                        0.0,   '#10b981',   // green (clean)
+                        0.15,  '#fbbf24',   // yellow
+                        0.30,  '#f59e0b',   // orange
+                        0.50,  '#ef4444'    // red (hazy)
+                    ],
+                    'circle-opacity': 0.7
+                }
+            });
+
+            // Hide it by default (will be toggled on)
+            map.setLayoutProperty('airQuality', 'visibility', 'none');
+        })
+        .catch(err => {
+            console.error('Failed to load AOD data:', err);
+            alert('⚠️ Air quality data failed to load. Check aod.json in /static.');
+        });
+}
         // Global registry of placed buildings for quick lookup / export
 window.buildingRegistry = window.buildingRegistry || [];
 
@@ -1034,21 +1068,31 @@ window.buildingRegistry = window.buildingRegistry || [];
         }
 
         function toggleLayer(layerId) {
-            const isActive = state.activeLayers[layerId];
-            state.activeLayers[layerId] = !isActive;
-            
-            const toggle = document.getElementById(`toggle-${layerId}`);
-            if (!isActive) {
-                toggle.classList.add('active');
-                map.setPaintProperty(layerId, 'raster-opacity', 0.5);
-            } else {
-                toggle.classList.remove('active');
-                map.setPaintProperty(layerId, 'raster-opacity', 0);
-            }
-            
-            updateActiveLayersDisplay();
-        }
+    const isActive = state.activeLayers[layerId];
+    state.activeLayers[layerId] = !isActive;
+    const toggle = document.getElementById(`toggle-${layerId}`);
 
+    if (layerId === 'airQuality') {
+        if (!isActive) {
+            toggle.classList.add('active');
+            map.setLayoutProperty('airQuality', 'visibility', 'visible');
+        } else {
+            toggle.classList.remove('active');
+            map.setLayoutProperty('airQuality', 'visibility', 'none');
+        }
+    } else {
+        // Keep old behavior for other (raster) layers if you add them later
+        if (!isActive) {
+            toggle.classList.add('active');
+            map.setPaintProperty(layerId, 'raster-opacity', 0.5);
+        } else {
+            toggle.classList.remove('active');
+            map.setPaintProperty(layerId, 'raster-opacity', 0);
+        }
+    }
+
+    updateActiveLayersDisplay();
+}
         function updateActiveLayersDisplay() {
             const activeLayers = Object.entries(state.activeLayers)
                 .filter(([_, active]) => active)
@@ -1359,6 +1403,7 @@ async function runAIUrbanAnalysis() {
     // Optional: read response (remove if you truly want to do nothing else)
     const data = await response.json().catch(() => null);
     console.log('AI response:', data);
+    return data["reply"];
   } catch (err) {
     console.error('runAIUrbanAnalysis failed:', err);
   }
@@ -1377,7 +1422,7 @@ function createRedIndicator() {
 
    // Modified placeBuilding
 function placeBuilding(building, lngLat) {
-    runAIUrbanAnalysis().then(msg => { if (msg) addWarning(msg, 3000); });
+    runAIUrbanAnalysis().then(msg => { if (msg) addWarning(msg, 10000); });
         // Check for collision FIRST
     const buildingDimension = Number.isFinite(building.dimension) ? Number(building.dimension) : 120;
     const collision = checkCollision(lngLat, buildingDimension);
@@ -1590,7 +1635,7 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content: "Just greet the user for now"})
         });
-        const data = await response.json();
+        const data = await response.json()["reply"];
 
         // Handle Groq API errors (e.g., 400, 429, etc.)
         if (!response.ok || data.error) {
