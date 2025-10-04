@@ -557,7 +557,7 @@
                         </svg>
                         Sustainability Dashboard
                     </div>
-
+                    
                     <div class="score-display">
                         <div class="score-value" id="score">72</div>
                         <div class="score-label">Overall Score</div>
@@ -614,7 +614,7 @@
                         </svg>
                         NASA Earth Data Layers
                     </div>
-
+                    
                     <div id="layer-toggles"></div>
                 </div>
 
@@ -625,7 +625,7 @@
                         </svg>
                         Building Catalog
                     </div>
-
+                    
                     <div id="building-list"></div>
                 </div>
             </div>
@@ -633,12 +633,12 @@
 
         <div id="map-container">
             <div id="map"></div>
-
-            <div class="overlay" id="instructions">
-                <div class="overlay-header" id="instructions-header">
-                    <div class="overlay-title">🎯 Quick Start Guide</div>
+            
+            <div class="overlay" id="instructions" style="bottom: 25px; left: auto; top: auto; right: 20px; width: 400px; height: auto; resize: none;">
+                <div class="overlay-header" style="cursor: default;">
+                    <div class="overlay-title">Quick Start Guide</div>
                     <div class="overlay-controls">
-                        <button class="overlay-btn" onclick="toggleMinimize('instructions')">−</button>
+                        <button class="overlay-btn" onclick="document.getElementById('instructions').style.display='none'">✕</button>
                     </div>
                 </div>
                 <div class="overlay-content">
@@ -650,7 +650,7 @@
                         <li>• Green buildings reduce carbon emissions</li>
                         <li>• Balance residential, commercial & services</li>
                         <li>• Watch AI warnings for planning issues</li>
-                        <li>• Resize and move these panels as needed</li>
+                        <li>• Resize and move the warning panels as needed</li>
                     </ul>
                 </div>
             </div>
@@ -687,35 +687,53 @@
     </div>
 
     <script>
-        const TOKYO_CENTER = [139.6917, 35.6895];
-
+        const TOKYO_CENTER = [139.76685988006122, 35.681665376337875];
+        
         const layers = [
             { id: 'airQuality', name: 'Air Quality (MODIS AOD)', color: '#f59e0b' },
             { id: 'temperature', name: 'Surface Temperature (Landsat 8)', color: '#ef4444' },
             { id: 'vegetation', name: 'Vegetation Health (NDVI)', color: '#10b981' },
             { id: 'precipitation', name: 'Precipitation (GPM)', color: '#3b82f6' }
         ];
+    // Center on Tokyo Station
+    const TOKYO_STATION = [139.767125, 35.681236];
 
-        const buildings = [
-            { id: 'residential-low', name: 'Single Home', icon: '🏠', cost: 50, carbon: 20, pop: 4, height: 5 },
-            { id: 'residential-mid', name: 'Apartment Complex', icon: '🏢', cost: 200, carbon: 80, pop: 50, height: 15 },
-            { id: 'residential-high', name: 'High-Rise Tower', icon: '🏙️', cost: 800, carbon: 300, pop: 500, height: 40 },
-            { id: 'commercial-shop', name: 'Shopping District', icon: '🛍️', cost: 150, carbon: 60, pop: 0, height: 8 },
-            { id: 'commercial-office', name: 'Office Building', icon: '🏢', cost: 400, carbon: 150, pop: 0, height: 25 },
-            { id: 'industrial-light', name: 'Light Industry', icon: '🏭', cost: 300, carbon: 400, pop: 0, height: 12 },
-            { id: 'industrial-tech', name: 'Tech Hub', icon: '💻', cost: 500, carbon: 200, pop: 0, height: 18 },
-            { id: 'service-school', name: 'School', icon: '🏫', cost: 250, carbon: 50, pop: 0, height: 10 },
-            { id: 'service-hospital', name: 'Hospital', icon: '🏥', cost: 500, carbon: 100, pop: 0, height: 15 },
-            { id: 'service-fire', name: 'Fire Station', icon: '🚒', cost: 180, carbon: 30, pop: 0, height: 8 },
-            { id: 'transport-station', name: 'Metro Station', icon: '🚇', cost: 600, carbon: 80, pop: 0, height: 6 },
-            { id: 'transport-rail', name: 'Rail Terminal', icon: '🚄', cost: 800, carbon: 120, pop: 0, height: 10 },
-            { id: 'green-park', name: 'Urban Park', icon: '🌳', cost: 100, carbon: -50, pop: 0, height: 2 },
-            { id: 'green-forest', name: 'Urban Forest', icon: '🌲', cost: 150, carbon: -100, pop: 0, height: 3 },
-            { id: 'energy-solar', name: 'Solar Farm', icon: '☀️', cost: 350, carbon: -200, pop: 0, height: 4 },
-            { id: 'energy-wind', name: 'Wind Turbines', icon: '💨', cost: 400, carbon: -250, pop: 0, height: 30 },
-            { id: 'utility-water', name: 'Water Treatment', icon: '💧', cost: 450, carbon: 100, pop: 0, height: 12 },
-            { id: 'utility-recycle', name: 'Recycling Center', icon: '♻️', cost: 200, carbon: -80, pop: 0, height: 8 }
-        ];
+    // 10 km x 10 km (±5 km) box around Tokyo Station
+    // 1° lat ≈ 111.32 km; lon scaled by cos(latitude)
+    const LAT_DELTA = 5 / 111.32; // ≈ 0.0449156
+    const LON_DELTA = 5 / (111.32 * Math.cos(35.681236 * Math.PI / 180)); // ≈ 0.0552960
+
+    const BOUNDS_SW = [TOKYO_STATION[0] - LON_DELTA, TOKYO_STATION[1] - LAT_DELTA];
+    const BOUNDS_NE = [TOKYO_STATION[0] + LON_DELTA, TOKYO_STATION[1] + LAT_DELTA];
+    const TOKYO_STATION_BOUNDS = [BOUNDS_SW, BOUNDS_NE];
+    
+    const buildings = [
+        { id: 'residential-mid', name: 'Apartment Complex', icon: '🏢', cost: 200, carbon: 80, pop: 50, height: 15, dimension: 800 },
+        { id: 'residential-high', name: 'High-Rise Tower', icon: '🏙️', cost: 800, carbon: 300, pop: 500, height: 40, dimension: 200},
+
+        { id: 'commercial-shop', name: 'Shopping District', icon: '🛍️', cost: 150, carbon: 60, pop: 0, height: 8, dimension: 100 },
+        { id: 'commercial-office', name: 'Office Building', icon: '🏢', cost: 400, carbon: 150, pop: 0, height: 25, dimension: 150 },
+
+        { id: 'industrial-light', name: 'Light Industry', icon: '🏭', cost: 300, carbon: 400, pop: 0, height: 12, dimension: 300 },
+        { id: 'industrial-tech', name: 'Tech Hub', icon: '💻', cost: 500, carbon: 200, pop: 0, height: 18, dimension: 250 },
+
+        { id: 'service-school', name: 'School', icon: '🏫', cost: 250, carbon: 50, pop: 0, height: 10, dimension: 120 },
+        { id: 'service-hospital', name: 'Hospital', icon: '🏥', cost: 500, carbon: 100, pop: 0, height: 15, dimension: 150 },
+        { id: 'service-fire', name: 'Fire Station', icon: '🚒', cost: 180, carbon: 30, pop: 0, height: 8, dimension: 80 },
+
+        { id: 'transport-station', name: 'Metro Station', icon: '🚇', cost: 600, carbon: 80, pop: 0, height: 6, dimension: 200 },
+        { id: 'transport-rail', name: 'Rail Terminal', icon: '🚄', cost: 800, carbon: 120, pop: 0, height: 10, dimension: 400 },
+
+        { id: 'green-park', name: 'Urban Park', icon: '🌳', cost: 100, carbon: -50, pop: 0, height: 2, dimension: 250 },
+        { id: 'green-forest', name: 'Urban Forest', icon: '🌲', cost: 150, carbon: -100, pop: 0, height: 3, dimension: 400 },
+
+        { id: 'energy-solar', name: 'Solar Farm', icon: '☀️', cost: 350, carbon: -200, pop: 0, height: 4, dimension: 500 },
+        { id: 'energy-wind', name: 'Wind Turbines', icon: '💨', cost: 400, carbon: -250, pop: 0, height: 30, dimension: 600 },
+
+        { id: 'utility-water', name: 'Water Treatment', icon: '💧', cost: 450, carbon: 100, pop: 0, height: 12, dimension: 300 },
+        { id: 'utility-recycle', name: 'Recycling Center', icon: '♻️', cost: 200, carbon: -80, pop: 0, height: 8, dimension: 200 }
+    ];
+
 
         let map;
         let state = {
@@ -768,9 +786,11 @@
                 },
                 center: TOKYO_CENTER,
                 zoom: 13,
+                maxZoom: 13.5,
                 pitch: 60,
                 bearing: -17.6,
-                antialias: true
+                antialias: true,
+                maxBounds: TOKYO_STATION_BOUNDS,
             });
 
             map.addControl(new maplibregl.NavigationControl(), 'top-left');
@@ -780,6 +800,27 @@
                 add3DBuildings();
                 addDataLayers();
 
+                // Create custom marker element for Tokyo flag
+                const markerEl = document.createElement('div');
+                markerEl.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+                markerEl.style.padding = '4px 8px';
+                markerEl.style.borderRadius = '4px';
+                markerEl.style.border = '1px solid #dc2626';  // Red border for Japanese flag vibe
+                markerEl.style.fontSize = '16px';
+                markerEl.style.fontWeight = 'bold';
+                markerEl.style.color = '#dc2626';
+                markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                markerEl.style.cursor = 'pointer';
+                markerEl.innerHTML = '🇯🇵 Tokyo';  // Flag emoji + text; customize as needed
+
+                // Add the marker at Tokyo center
+                new maplibregl.Marker({
+                    element: markerEl,
+                    anchor: 'bottom'  // Anchor at bottom for pin-like effect
+                })
+                .setLngLat(TOKYO_CENTER)
+                .addTo(map);
+                
                 setTimeout(() => {
                     document.getElementById('loading').classList.add('hidden');
                 }, 1000);
@@ -877,7 +918,7 @@
         function toggleLayer(layerId) {
             const isActive = state.activeLayers[layerId];
             state.activeLayers[layerId] = !isActive;
-
+            
             const toggle = document.getElementById(`toggle-${layerId}`);
             if (!isActive) {
                 toggle.classList.add('active');
@@ -886,7 +927,7 @@
                 toggle.classList.remove('active');
                 map.setPaintProperty(layerId, 'raster-opacity', 0);
             }
-
+            
             updateActiveLayersDisplay();
         }
 
@@ -894,13 +935,13 @@
             const activeLayers = Object.entries(state.activeLayers)
                 .filter(([_, active]) => active)
                 .map(([id, _]) => layers.find(l => l.id === id));
-
+            
             const container = document.getElementById('active-layers');
             const list = document.getElementById('active-layer-list');
-
+            
             if (activeLayers.length > 0) {
                 container.style.display = 'block';
-                list.innerHTML = activeLayers.map(layer =>
+                list.innerHTML = activeLayers.map(layer => 
                     `<span class="layer-badge">${layer.name}</span>`
                 ).join('');
             } else {
@@ -911,7 +952,7 @@
         function renderBuildings() {
             const container = document.getElementById('building-list');
             container.innerHTML = buildings.map(building => `
-                <div class="building-item"
+                <div class="building-item" 
                      draggable="true"
                      data-building-id="${building.id}"
                      onclick="selectBuilding('${building.id}')">
@@ -940,18 +981,18 @@
         function handleDragStart(e) {
             const buildingId = e.currentTarget.getAttribute('data-building-id');
             currentDraggedBuilding = buildings.find(b => b.id === buildingId);
-
+            
             e.currentTarget.classList.add('dragging');
-
+            
             // Create ghost element
             dragGhost = document.createElement('div');
             dragGhost.className = 'drag-ghost';
             dragGhost.textContent = currentDraggedBuilding.icon;
             document.body.appendChild(dragGhost);
-
+            
             // Update ghost position
             document.addEventListener('dragover', updateGhostPosition);
-
+            
             e.dataTransfer.effectAllowed = 'copy';
             e.dataTransfer.setData('text/plain', buildingId);
         }
@@ -977,86 +1018,99 @@
         function selectBuilding(buildingId) {
             const building = buildings.find(b => b.id === buildingId);
             state.selectedBuilding = building;
-
+            
             // Visual feedback
             document.querySelectorAll('.building-item').forEach(item => {
                 item.style.borderColor = '#334155';
             });
             event.currentTarget.style.borderColor = '#60a5fa';
-
+            
             map.getCanvas().style.cursor = 'crosshair';
         }
 
-        function placeBuilding(building, lngLat) {
-            // Add marker for the building
-            const el = document.createElement('div');
-            el.className = 'building-marker';
-            el.innerHTML = building.icon;
-            el.style.fontSize = '32px';
-            el.style.cursor = 'pointer';
-            el.title = building.name;
+        // Helper (add once near your other utils)
+function metersToDegreeDeltas(meters, latDeg) {
+  const dLat = meters / 111320; // ~111.32 km per degree of latitude
+  const latRad = latDeg * Math.PI / 180;
+  const metersPerDegLon = 111320 * Math.cos(latRad) || 1e-9;
+  const dLon = meters / metersPerDegLon;
+  return { dLat, dLon };
+}
 
-            new maplibregl.Marker({element: el})
-                .setLngLat(lngLat)
-                .addTo(map);
+    // Modified placeBuilding
+    function placeBuilding(building, lngLat) {
+        // Add marker for the building
+        const el = document.createElement('div');
+        el.className = 'building-marker';
+        el.innerHTML = building.icon;
+        el.style.fontSize = '32px';
+        el.style.cursor = 'pointer';
+        el.title = building.name;
 
-            // Add 3D building extrusion
-            const buildingId = `building-${Date.now()}`;
-            const radius = 0.0002;
+        new maplibregl.Marker({ element: el })
+            .setLngLat(lngLat)
+            .addTo(map);
 
-            map.addSource(buildingId, {
-                type: 'geojson',
-                data: {
-                    type: 'Feature',
-                    geometry: {
-                        type: 'Polygon',
-                        coordinates: [[
-                            [lngLat.lng - radius, lngLat.lat - radius],
-                            [lngLat.lng + radius, lngLat.lat - radius],
-                            [lngLat.lng + radius, lngLat.lat + radius],
-                            [lngLat.lng - radius, lngLat.lat + radius],
-                            [lngLat.lng - radius, lngLat.lat - radius]
-                        ]]
-                    },
-                    properties: {
-                        height: building.height
-                    }
-                }
-            });
+        // Add 3D building extrusion
+        const buildingId = `building-${Date.now()}`;
 
-            map.addLayer({
-                id: buildingId,
-                type: 'fill-extrusion',
-                source: buildingId,
-                paint: {
-                    'fill-extrusion-color': building.carbon < 0 ? '#10b981' : building.carbon > 200 ? '#ef4444' : '#3b82f6',
-                    'fill-extrusion-height': building.height,
-                    'fill-extrusion-opacity': 0.9
-                }
-            });
+        // ✅ Use per-building dimension (meters). Default 120m if not provided.
+        const sizeMeters = Number.isFinite(building.dimension) ? building.dimension : 120;
+        const half = sizeMeters  / 2;
+        const { dLat, dLon } = metersToDegreeDeltas(half, lngLat.lat);
 
-            // Update state
-            state.placedBuildings.push({building, lngLat, id: buildingId});
-            updateMetrics(building);
-            checkAndAddWarnings(building);
+        const coords = [[
+            [lngLat.lng - dLon, lngLat.lat - dLat],
+            [lngLat.lng + dLon, lngLat.lat - dLat],
+            [lngLat.lng + dLon, lngLat.lat + dLat],
+            [lngLat.lng - dLon, lngLat.lat + dLat],
+            [lngLat.lng - dLon, lngLat.lat - dLat]
+        ]];
 
-            // Reset selection
-            state.selectedBuilding = null;
-            map.getCanvas().style.cursor = '';
-            document.querySelectorAll('.building-item').forEach(item => {
-                item.style.borderColor = '#334155';
-            });
-        }
+        map.addSource(buildingId, {
+            type: 'geojson',
+            data: {
+            type: 'Feature',
+            geometry: { type: 'Polygon', coordinates: coords },
+            properties: { height: building.height*5 }
+            }
+        });
+
+        map.addLayer({
+            id: buildingId,
+            type: 'fill-extrusion',
+            source: buildingId,
+            paint: {
+            'fill-extrusion-color':
+                building.carbon < 0 ? '#10b981' : (building.carbon > 200 ? '#ef4444' : '#3b82f6'),
+            'fill-extrusion-height': ['coalesce', ['get', 'height'], building.height],
+            'fill-extrusion-opacity': 0.9
+            }
+        });
+
+        // Update state
+        state.placedBuildings.push({ building, lngLat, id: buildingId });
+        updateMetrics(building);
+        checkAndAddWarnings(building);
+
+        // Reset selection
+        state.selectedBuilding = null;
+        map.getCanvas().style.cursor = '';
+        document.querySelectorAll('.building-item').forEach(item => {
+            item.style.borderColor = '#334155';
+        });
+    }
+
 
         function updateMetrics(building) {
             // Update population
             state.population += building.pop;
             document.getElementById('population').textContent = `${Math.floor(state.population / 1000)}k`;
-
+            
             // Update carbon
             state.carbon += building.carbon;
             document.getElementById('carbon').textContent = `${Math.floor(state.carbon / 1000)}k`;
-
+            
             // Update green space
             if (building.carbon < 0) {
                 state.green += 2;
@@ -1067,18 +1121,18 @@
             }
             document.getElementById('green').textContent = `${state.green}%`;
             document.getElementById('aqi').textContent = state.aqi;
-
+            
             // Update overall score
             const carbonScore = Math.max(0, 100 - (state.carbon / 2000));
             const greenScore = state.green * 1.2;
             const aqiScore = Math.max(0, 100 - state.aqi);
-
+            
             state.score = Math.floor((carbonScore + greenScore + aqiScore) / 3);
             state.score = Math.max(0, Math.min(100, state.score));
-
+            
             document.getElementById('score').textContent = state.score;
             document.getElementById('score-bar').style.width = `${state.score}%`;
-
+            
             // Update score color
             const scoreEl = document.getElementById('score');
             if (state.score > 70) {
@@ -1091,35 +1145,80 @@
             scoreEl.style.webkitBackgroundClip = 'text';
             scoreEl.style.webkitTextFillColor = 'transparent';
         }
+        /* about the groq api, this is to be change*/
+        async function checkAndAddWarnings(building) {
+    // === Keep your existing rule-based warnings ===
+    const residentialCount = state.placedBuildings.filter(b => 
+        b.building.id.includes('residential')).length;
+    const schoolCount = state.placedBuildings.filter(b => 
+        b.building.id === 'service-school').length;
+    const transportCount = state.placedBuildings.filter(b => 
+        b.building.id.includes('transport')).length;
 
-        function checkAndAddWarnings(building) {
-            const residentialCount = state.placedBuildings.filter(b =>
-                b.building.id.includes('residential')).length;
-            const schoolCount = state.placedBuildings.filter(b =>
-                b.building.id === 'service-school').length;
-            const transportCount = state.placedBuildings.filter(b =>
-                b.building.id.includes('transport')).length;
+    if (residentialCount > 3 && schoolCount === 0) {
+        addWarning('Elementary school capacity needed. 1,200+ children require education access within 2km.');
+    }
+    if (state.population > 900000 && transportCount < 2) {
+        addWarning('Transportation infrastructure insufficient. Add metro stations for growing population.');
+    }
+    if (building.id.includes('industrial') && residentialCount > 0) {
+        addWarning('Industrial zone proximity warning. Maintain 500m buffer from residential areas or add green barrier.');
+    }
+    if (state.aqi > 80) {
+        addWarning('Air quality declining. Add green spaces or reduce industrial emissions.');
+    }
+    if (state.green < 15) {
+        addWarning('Green space ratio below healthy threshold. Add parks or urban forests.');
+    }
 
-            if (residentialCount > 3 && schoolCount === 0) {
-                addWarning('Elementary school capacity needed. 1,200+ children require education access within 2km.');
-            }
+    // === ADD GROQ AI WARNING (temporary frontend call) ===
+    const GROQ_API_KEY = 'gsk_your_actual_api_key_here'; // ← REPLACE THIS!
 
-            if (state.population > 900000 && transportCount < 2) {
-                addWarning('Transportation infrastructure insufficient. Add metro stations for growing population.');
-            }
+    if (!GROQ_API_KEY || GROQ_API_KEY === '') {
+        console.warn('Groq API key not set. Skipping AI warning.');
+        return;
+    }
 
-            if (building.id.includes('industrial') && residentialCount > 0) {
-                addWarning('Industrial zone proximity warning. Maintain 500m buffer from residential areas or add green barrier.');
-            }
+    try {
+        const prompt = `
+You are an expert urban planner. Analyze the following city metrics:
+- Sustainability Score: ${state.score}/100
+- Carbon: ${state.carbon} tons
+- Green Space: ${state.green}%
+- Air Quality Index: ${state.aqi}
+- Population: ${Math.floor(state.population / 1000)}k
 
-            if (state.aqi > 80) {
-                addWarning('Air quality declining. Add green spaces or reduce industrial emissions.');
-            }
+A new "${building.name}" was just placed.
 
-            if (state.green < 15) {
-                addWarning('Green space ratio below healthy threshold. Add parks or urban forests.');
-            }
+Provide ONE short, actionable warning or sustainability tip (max 1 sentence). If everything is fine, respond with "All good."
+        `.trim();
+
+        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${GROQ_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                messages: [{ role: 'user', content: prompt }],
+                model: 'llama3-8b-8192',
+                max_tokens: 60,
+                temperature: 0.7
+            })
+        });
+
+        const data = await response.json();
+        const aiMsg = data.choices?.[0]?.message?.content?.trim();
+
+        if (aiMsg && !/all good/i.test(aiMsg)) {
+            addWarning(aiMsg);
         }
+    } catch (err) {
+        console.warn('Groq AI warning failed:', err);
+
+    }
+}
+         /* till here change*/
 
         function addWarning(message) {
             if (!state.warnings.includes(message)) {
@@ -1131,7 +1230,7 @@
         function updateWarningsDisplay() {
             const container = document.getElementById('warnings');
             const list = document.getElementById('warning-list');
-
+            
             if (state.warnings.length > 0) {
                 container.style.display = 'block';
                 list.innerHTML = state.warnings.map(warning => `
@@ -1158,7 +1257,7 @@
                         map.removeSource(item.id);
                     }
                 });
-
+                
                 // Reset state
                 state = {
                     score: 72,
@@ -1170,7 +1269,7 @@
                     placedBuildings: [],
                     warnings: []
                 };
-
+                
                 // Update UI
                 document.getElementById('score').textContent = state.score;
                 document.getElementById('score-bar').style.width = `${state.score}%`;
@@ -1178,9 +1277,9 @@
                 document.getElementById('green').textContent = `${state.green}%`;
                 document.getElementById('aqi').textContent = state.aqi;
                 document.getElementById('population').textContent = `${Math.floor(state.population / 1000)}k`;
-
+                
                 updateWarningsDisplay();
-
+                
                 // Reset map view
                 map.flyTo({
                     center: TOKYO_CENTER,
@@ -1233,7 +1332,7 @@ ${state.score <= 60 ? '⚠ Critical improvements needed. Focus on reducing carbo
 ${state.green < 20 ? '⚠ Increase green space ratio to at least 25% for healthy urban environment.' : ''}
 ${state.aqi > 70 ? '⚠ Air quality requires immediate attention. Add parks and reduce industrial emissions.' : ''}
             `.trim();
-
+            
             alert(report);
             console.log(report);
         }
@@ -1242,11 +1341,11 @@ ${state.aqi > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
         function makeDraggable(elementId) {
             const element = document.getElementById(elementId);
             const header = document.getElementById(`${elementId}-header`);
-
+            
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-
+            
             header.onmousedown = dragMouseDown;
-
+            
             function dragMouseDown(e) {
                 e.preventDefault();
                 pos3 = e.clientX;
@@ -1254,7 +1353,7 @@ ${state.aqi > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
                 document.onmouseup = closeDragElement;
                 document.onmousemove = elementDrag;
             }
-
+            
             function elementDrag(e) {
                 e.preventDefault();
                 pos1 = pos3 - e.clientX;
@@ -1266,7 +1365,7 @@ ${state.aqi > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
                 element.style.bottom = 'auto';
                 element.style.right = 'auto';
             }
-
+            
             function closeDragElement() {
                 document.onmouseup = null;
                 document.onmousemove = null;
@@ -1276,7 +1375,7 @@ ${state.aqi > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
         function toggleMinimize(elementId) {
             const element = document.getElementById(elementId);
             element.classList.toggle('minimized');
-
+            
             const btn = element.querySelector('.overlay-btn');
             btn.textContent = element.classList.contains('minimized') ? '+' : '−';
         }
