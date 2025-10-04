@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tokyo Urban Planner 3D - Sustainable City Design</title>
+    <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
+    <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            overflow: hidden;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 380px;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            overflow-y: auto;
+            border-right: 1px solid #334155;
+            z-index: 10;
+            box-shadow: 4px 0 20px rgba(0,0,0,0.3);
+        }
+
+        #sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #sidebar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        #sidebar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        .sidebar-content {
+            padding: 24px;
+        }
+
+        .header {
+            margin-bottom: 28px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Cards */
+        .card {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Metrics */
+        .score-display {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .score-value {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-label {
+            color: #94a3b8;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #1e293b;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            transition: width 0.5s ease;
+            border-radius: 4px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .metric-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .metric-label {
+            color: #64748b;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        /* Layer Toggles */
+        .layer-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid #334155;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .layer-toggle:hover {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: #475569;
+        }
+
+        .layer-toggle.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: #60a5fa;
+        }
+
+        .layer-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle-switch {
+            width: 44px;
+            height: 24px;
+            background: #334155;
+            border-radius: 12px;
+            position: relative;
+            transition: background 0.3s ease;
+        }
+
+        .layer-toggle.active .toggle-switch {
+            background: #10b981;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.3s ease;
+        }
+
+        .layer-toggle.active .toggle-switch::after {
+            transform: translateX(20px);
+        }
+
+        /* Buildings - Draggable */
+        .building-item {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .building-item:active {
+            cursor: grabbing;
+        }
+
+        .building-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .building-item:hover {
+            background: rgba(51, 65, 85, 0.8);
+            border-color: #60a5fa;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .building-item:hover::before {
+            transform: scaleX(1);
+        }
+
+        .building-item.dragging {
+            opacity: 0.5;
+        }
+
+        .building-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .building-name {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .building-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .stat-positive {
+            color: #10b981;
+        }
+
+        .stat-negative {
+            color: #f59e0b;
+        }
+
+        /* Map Container */
+        #map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Resizable Overlays */
+        .overlay {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            resize: both;
+            overflow: auto;
+            min-width: 200px;
+            min-height: 150px;
+            max-width: 600px;
+            max-height: 80vh;
+        }
+
+        .overlay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            cursor: move;
+            user-select: none;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .overlay-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .overlay-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .overlay-btn {
+            background: rgba(51, 65, 85, 0.6);
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .overlay-btn:hover {
+            background: rgba(71, 85, 105, 0.8);
+            color: #e2e8f0;
+        }
+
+        .overlay-content {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.8;
+        }
+
+        .overlay.minimized {
+            height: 50px !important;
+            resize: none;
+            overflow: hidden;
+        }
+
+        .overlay.minimized .overlay-content {
+            display: none;
+        }
+
+        #instructions {
+            top: 20px;
+            left: 20px;
+            width: 400px;
+            height: 250px;
+        }
+
+        #warnings {
+            top: 20px;
+            right: 20px;
+            width: 420px;
+            height: auto;
+            max-height: 400px;
+        }
+
+        .warning-item {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            gap: 12px;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .warning-icon {
+            color: #fbbf24;
+            flex-shrink: 0;
+        }
+
+        #active-layers {
+            bottom: 20px;
+            left: 20px;
+            width: 300px;
+            height: auto;
+        }
+
+        .layer-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-radius: 6px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        /* Controls */
+        #controls {
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .control-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Loading */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Drag Ghost */
+        .drag-ghost {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            font-size: 32px;
+            opacity: 0.8;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            #sidebar {
+                width: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #app {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                height: 40vh;
+            }
+            #map-container {
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="loader"></div>
+        <div class="loading-text">Loading Tokyo Urban Planner...</div>
+    </div>
+
+    <div id="app">
+        <div id="sidebar">
+            <div class="sidebar-content">
+                <div class="header">
+                    <h1>
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        Tokyo Urban Planner 3D
+                    </h1>
+                    <p>Design sustainable urban environments with real NASA data</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                        Sustainability Dashboard
+                    </div>
+
+                    <div class="score-display">
+                        <div class="score-value" id="score">72</div>
+                        <div class="score-label">Overall Score</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="score-bar" style="width: 72%"></div>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box">
+                            <div class="metric-label">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                                </svg>
+                                Carbon
+                            </div>
+                            <div class="metric-value" id="carbon">118k</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                </svg>
+                                Green Space
+                            </div>
+                            <div class="metric-value" id="green">22%</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5"/>
+                                </svg>
+                                Air Quality
+                            </div>
+                            <div class="metric-value" id="aqi">42</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                Population
+                            </div>
+                            <div class="metric-value" id="population">842k</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        NASA Earth Data Layers
+                    </div>
+
+                    <div id="layer-toggles"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                        Building Catalog
+                    </div>
+
+                    <div id="building-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="map-container">
+            <div id="map"></div>
+
+            <div class="overlay" id="instructions">
+                <div class="overlay-header" id="instructions-header">
+                    <div class="overlay-title">🎯 Quick Start Guide</div>
+                    <div class="overlay-controls">
+                        <button class="overlay-btn" onclick="toggleMinimize('instructions')">−</button>
+                    </div>
+                </div>
+                <div class="overlay-content">
+                    <ul style="list-style: none;">
+                        <li>• Drag buildings from sidebar onto the map</li>
+                        <li>• Or click building then click map to place</li>
+                        <li>• Toggle NASA data layers for insights</li>
+                        <li>• Monitor sustainability score in real-time</li>
+                        <li>• Green buildings reduce carbon emissions</li>
+                        <li>• Balance residential, commercial & services</li>
+                        <li>• Watch AI warnings for planning issues</li>
+                        <li>• Resize and move these panels as needed</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="overlay" id="warnings" style="display: none;">
+                <div class="overlay-header" id="warnings-header">
+                    <div class="overlay-title" style="color: #fbbf24;">⚠️ AI Planning Alerts</div>
+                    <div class="overlay-controls">
+                        <button class="overlay-btn" onclick="toggleMinimize('warnings')">−</button>
+                    </div>
+                </div>
+                <div class="overlay-content">
+                    <div id="warning-list"></div>
+                </div>
+            </div>
+
+            <div class="overlay" id="active-layers" style="display: none;">
+                <div class="overlay-header" id="active-layers-header">
+                    <div class="overlay-title">Active Layers</div>
+                    <div class="overlay-controls">
+                        <button class="overlay-btn" onclick="toggleMinimize('active-layers')">−</button>
+                    </div>
+                </div>
+                <div class="overlay-content">
+                    <div id="active-layer-list"></div>
+                </div>
+            </div>
+
+            <div id="controls">
+                <button class="control-btn" onclick="resetSimulation()">Reset Simulation</button>
+                <button class="control-btn" onclick="generateReport()">Generate Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const TOKYO_CENTER = [139.6917, 35.6895];
+
+        const layers = [
+            { id: 'airQuality', name: 'Air Quality (MODIS AOD)', color: '#f59e0b' },
+            { id: 'temperature', name: 'Surface Temperature (Landsat 8)', color: '#ef4444' },
+            { id: 'vegetation', name: 'Vegetation Health (NDVI)', color: '#10b981' },
+            { id: 'precipitation', name: 'Precipitation (GPM)', color: '#3b82f6' }
+        ];
+
+        const buildings = [
+            { id: 'residential-low', name: 'Single Home', icon: '🏠', cost: 50, carbon: 20, pop: 4, height: 5 },
+            { id: 'residential-mid', name: 'Apartment Complex', icon: '🏢', cost: 200, carbon: 80, pop: 50, height: 15 },
+            { id: 'residential-high', name: 'High-Rise Tower', icon: '🏙️', cost: 800, carbon: 300, pop: 500, height: 40 },
+            { id: 'commercial-shop', name: 'Shopping District', icon: '🛍️', cost: 150, carbon: 60, pop: 0, height: 8 },
+            { id: 'commercial-office', name: 'Office Building', icon: '🏢', cost: 400, carbon: 150, pop: 0, height: 25 },
+            { id: 'industrial-light', name: 'Light Industry', icon: '🏭', cost: 300, carbon: 400, pop: 0, height: 12 },
+            { id: 'industrial-tech', name: 'Tech Hub', icon: '💻', cost: 500, carbon: 200, pop: 0, height: 18 },
+            { id: 'service-school', name: 'School', icon: '🏫', cost: 250, carbon: 50, pop: 0, height: 10 },
+            { id: 'service-hospital', name: 'Hospital', icon: '🏥', cost: 500, carbon: 100, pop: 0, height: 15 },
+            { id: 'service-fire', name: 'Fire Station', icon: '🚒', cost: 180, carbon: 30, pop: 0, height: 8 },
+            { id: 'transport-station', name: 'Metro Station', icon: '🚇', cost: 600, carbon: 80, pop: 0, height: 6 },
+            { id: 'transport-rail', name: 'Rail Terminal', icon: '🚄', cost: 800, carbon: 120, pop: 0, height: 10 },
+            { id: 'green-park', name: 'Urban Park', icon: '🌳', cost: 100, carbon: -50, pop: 0, height: 2 },
+            { id: 'green-forest', name: 'Urban Forest', icon: '🌲', cost: 150, carbon: -100, pop: 0, height: 3 },
+            { id: 'energy-solar', name: 'Solar Farm', icon: '☀️', cost: 350, carbon: -200, pop: 0, height: 4 },
+            { id: 'energy-wind', name: 'Wind Turbines', icon: '💨', cost: 400, carbon: -250, pop: 0, height: 30 },
+            { id: 'utility-water', name: 'Water Treatment', icon: '💧', cost: 450, carbon: 100, pop: 0, height: 12 },
+            { id: 'utility-recycle', name: 'Recycling Center', icon: '♻️', cost: 200, carbon: -80, pop: 0, height: 8 }
+        ];
+
+        let map;
+        let state = {
+            score: 72,
+            carbon: 118000,
+            green: 22,
+            aqi: 42,
+            population: 842000,
+            activeLayers: {},
+            placedBuildings: [],
+            warnings: []
+        };
+
+        let dragGhost = null;
+        let currentDraggedBuilding = null;
+
+        function initMap() {
+            map = new maplibregl.Map({
+                container: 'map',
+                style: {
+                    version: 8,
+                    sources: {
+                        'osm': {
+                            type: 'raster',
+                            tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+                            tileSize: 256,
+                            attribution: '© OpenStreetMap contributors'
+                        }
+                    },
+                    layers: [
+                        {
+                            id: 'background',
+                            type: 'background',
+                            paint: {
+                                'background-color': '#1a2332'
+                            }
+                        },
+                        {
+                            id: 'osm',
+                            type: 'raster',
+                            source: 'osm',
+                            minzoom: 0,
+                            maxzoom: 19,
+                            paint: {
+                                'raster-opacity': 0.15,
+                                'raster-saturation': -1
+                            }
+                        }
+                    ]
+                },
+                center: TOKYO_CENTER,
+                zoom: 13,
+                pitch: 60,
+                bearing: -17.6,
+                antialias: true
+            });
+
+            map.addControl(new maplibregl.NavigationControl(), 'top-left');
+            map.addControl(new maplibregl.ScaleControl(), 'bottom-left');
+
+            map.on('load', () => {
+                add3DBuildings();
+                addDataLayers();
+
+                setTimeout(() => {
+                    document.getElementById('loading').classList.add('hidden');
+                }, 1000);
+
+                setTimeout(() => {
+                    addWarning('Population density exceeds 15,000/km² in Shibuya. Consider adding metro stations within 500m radius.');
+                    addWarning('Heat island effect detected (+3.2°C). Add 0.5 hectares of green space to mitigate urban warming.');
+                }, 3000);
+            });
+
+            // Handle map click for placement
+            map.on('click', (e) => {
+                if (state.selectedBuilding) {
+                    placeBuilding(state.selectedBuilding, e.lngLat);
+                }
+            });
+
+            // Handle drag drop on map
+            const mapEl = map.getContainer();
+            mapEl.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'copy';
+            });
+
+            mapEl.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (currentDraggedBuilding) {
+                    const rect = mapEl.getBoundingClientRect();
+                    const point = {
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                    };
+                    const lngLat = map.unproject(point);
+                    placeBuilding(currentDraggedBuilding, lngLat);
+                    currentDraggedBuilding = null;
+                }
+                if (dragGhost) {
+                    dragGhost.remove();
+                    dragGhost = null;
+                }
+            });
+        }
+
+        function add3DBuildings() {
+            map.addSource('openmaptiles', {
+                type: 'vector',
+                url: 'https://api.maptiler.com/tiles/v3/tiles.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL'
+            });
+
+            map.addLayer({
+                'id': '3d-buildings',
+                'source': 'openmaptiles',
+                'source-layer': 'building',
+                'type': 'fill-extrusion',
+                'minzoom': 12,
+                'paint': {
+                    'fill-extrusion-color': '#2a3f5f',
+                    'fill-extrusion-height': ['get', 'render_height'],
+                    'fill-extrusion-base': ['get', 'render_min_height'],
+                    'fill-extrusion-opacity': 0.6
+                }
+            });
+        }
+
+        function addDataLayers() {
+            layers.forEach(layer => {
+                map.addLayer({
+                    id: layer.id,
+                    type: 'raster',
+                    source: {
+                        type: 'raster',
+                        tiles: [`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Aerosol/default/2024-01-01/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png`],
+                        tileSize: 256
+                    },
+                    paint: {
+                        'raster-opacity': 0
+                    }
+                });
+            });
+        }
+
+        function renderLayerToggles() {
+            const container = document.getElementById('layer-toggles');
+            container.innerHTML = layers.map(layer => `
+                <div class="layer-toggle" onclick="toggleLayer('${layer.id}')" id="toggle-${layer.id}">
+                    <div class="layer-info">
+                        <div style="width: 12px; height: 12px; border-radius: 50%; background: ${layer.color}"></div>
+                        <span style="font-size: 13px;">${layer.name}</span>
+                    </div>
+                    <div class="toggle-switch"></div>
+                </div>
+            `).join('');
+        }
+
+        function toggleLayer(layerId) {
+            const isActive = state.activeLayers[layerId];
+            state.activeLayers[layerId] = !isActive;
+
+            const toggle = document.getElementById(`toggle-${layerId}`);
+            if (!isActive) {
+                toggle.classList.add('active');
+                map.setPaintProperty(layerId, 'raster-opacity', 0.5);
+            } else {
+                toggle.classList.remove('active');
+                map.setPaintProperty(layerId, 'raster-opacity', 0);
+            }
+
+            updateActiveLayersDisplay();
+        }
+
+        function updateActiveLayersDisplay() {
+            const activeLayers = Object.entries(state.activeLayers)
+                .filter(([_, active]) => active)
+                .map(([id, _]) => layers.find(l => l.id === id));
+
+            const container = document.getElementById('active-layers');
+            const list = document.getElementById('active-layer-list');
+
+            if (activeLayers.length > 0) {
+                container.style.display = 'block';
+                list.innerHTML = activeLayers.map(layer =>
+                    `<span class="layer-badge">${layer.name}</span>`
+                ).join('');
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function renderBuildings() {
+            const container = document.getElementById('building-list');
+            container.innerHTML = buildings.map(building => `
+                <div class="building-item"
+                     draggable="true"
+                     data-building-id="${building.id}"
+                     onclick="selectBuilding('${building.id}')">
+                    <div class="building-header">
+                        <span style="font-size: 24px;">${building.icon}</span>
+                        <span class="building-name">${building.name}</span>
+                    </div>
+                    <div class="building-stats">
+                        <div>💰 Cost: ${building.cost}M</div>
+                        <div class="${building.carbon < 0 ? 'stat-positive' : 'stat-negative'}">
+                            ${building.carbon < 0 ? '🌱' : '☁️'} Carbon: ${building.carbon > 0 ? '+' : ''}${building.carbon}t
+                        </div>
+                        ${building.pop > 0 ? `<div>👥 Pop: +${building.pop}</div>` : '<div></div>'}
+                        <div>📏 Height: ${building.height}m</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Add drag event listeners
+            document.querySelectorAll('.building-item').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+        }
+
+        function handleDragStart(e) {
+            const buildingId = e.currentTarget.getAttribute('data-building-id');
+            currentDraggedBuilding = buildings.find(b => b.id === buildingId);
+
+            e.currentTarget.classList.add('dragging');
+
+            // Create ghost element
+            dragGhost = document.createElement('div');
+            dragGhost.className = 'drag-ghost';
+            dragGhost.textContent = currentDraggedBuilding.icon;
+            document.body.appendChild(dragGhost);
+
+            // Update ghost position
+            document.addEventListener('dragover', updateGhostPosition);
+
+            e.dataTransfer.effectAllowed = 'copy';
+            e.dataTransfer.setData('text/plain', buildingId);
+        }
+
+        function handleDragEnd(e) {
+            e.currentTarget.classList.remove('dragging');
+            document.removeEventListener('dragover', updateGhostPosition);
+            if (dragGhost && !dragGhost.parentElement) {
+                // Ghost was already removed by drop
+            } else if (dragGhost) {
+                dragGhost.remove();
+                dragGhost = null;
+            }
+        }
+
+        function updateGhostPosition(e) {
+            if (dragGhost) {
+                dragGhost.style.left = e.clientX + 'px';
+                dragGhost.style.top = e.clientY + 'px';
+            }
+        }
+
+        function selectBuilding(buildingId) {
+            const building = buildings.find(b => b.id === buildingId);
+            state.selectedBuilding = building;
+
+            // Visual feedback
+            document.querySelectorAll('.building-item').forEach(item => {
+                item.style.borderColor = '#334155';
+            });
+            event.currentTarget.style.borderColor = '#60a5fa';
+
+            map.getCanvas().style.cursor = 'crosshair';
+        }
+
+        function placeBuilding(building, lngLat) {
+            // Add marker for the building
+            const el = document.createElement('div');
+            el.className = 'building-marker';
+            el.innerHTML = building.icon;
+            el.style.fontSize = '32px';
+            el.style.cursor = 'pointer';
+            el.title = building.name;
+
+            new maplibregl.Marker({element: el})
+                .setLngLat(lngLat)
+                .addTo(map);
+
+            // Add 3D building extrusion
+            const buildingId = `building-${Date.now()}`;
+            const radius = 0.0002;
+
+            map.addSource(buildingId, {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Polygon',
+                        coordinates: [[
+                            [lngLat.lng - radius, lngLat.lat - radius],
+                            [lngLat.lng + radius, lngLat.lat - radius],
+                            [lngLat.lng + radius, lngLat.lat + radius],
+                            [lngLat.lng - radius, lngLat.lat + radius],
+                            [lngLat.lng - radius, lngLat.lat - radius]
+                        ]]
+                    },
+                    properties: {
+                        height: building.height
+                    }
+                }
+            });
+
+            map.addLayer({
+                id: buildingId,
+                type: 'fill-extrusion',
+                source: buildingId,
+                paint: {
+                    'fill-extrusion-color': building.carbon < 0 ? '#10b981' : building.carbon > 200 ? '#ef4444' : '#3b82f6',
+                    'fill-extrusion-height': building.height,
+                    'fill-extrusion-opacity': 0.9
+                }
+            });
+
+            // Update state
+            state.placedBuildings.push({building, lngLat, id: buildingId});
+            updateMetrics(building);
+            checkAndAddWarnings(building);
+
+            // Reset selection
+            state.selectedBuilding = null;
+            map.getCanvas().style.cursor = '';
+            document.querySelectorAll('.building-item').forEach(item => {
+                item.style.borderColor = '#334155';
+            });
+        }
+
+        function updateMetrics(building) {
+            // Update population
+            state.population += building.pop;
+            document.getElementById('population').textContent = `${Math.floor(state.population / 1000)}k`;
+
+            // Update carbon
+            state.carbon += building.carbon;
+            document.getElementById('carbon').textContent = `${Math.floor(state.carbon / 1000)}k`;
+
+            // Update green space
+            if (building.carbon < 0) {
+                state.green += 2;
+                state.aqi = Math.max(0, state.aqi - 3);
+            } else if (building.carbon > 200) {
+                state.green = Math.max(0, state.green - 1);
+                state.aqi = Math.min(500, state.aqi + 5);
+            }
+            document.getElementById('green').textContent = `${state.green}%`;
+            document.getElementById('aqi').textContent = state.aqi;
+
+            // Update overall score
+            const carbonScore = Math.max(0, 100 - (state.carbon / 2000));
+            const greenScore = state.green * 1.2;
+            const aqiScore = Math.max(0, 100 - state.aqi);
+
+            state.score = Math.floor((carbonScore + greenScore + aqiScore) / 3);
+            state.score = Math.max(0, Math.min(100, state.score));
+
+            document.getElementById('score').textContent = state.score;
+            document.getElementById('score-bar').style.width = `${state.score}%`;
+
+            // Update score color
+            const scoreEl = document.getElementById('score');
+            if (state.score > 70) {
+                scoreEl.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+            } else if (state.score > 40) {
+                scoreEl.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            } else {
+                scoreEl.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            }
+            scoreEl.style.webkitBackgroundClip = 'text';
+            scoreEl.style.webkitTextFillColor = 'transparent';
+        }
+
+        function checkAndAddWarnings(building) {
+            const residentialCount = state.placedBuildings.filter(b =>
+                b.building.id.includes('residential')).length;
+            const schoolCount = state.placedBuildings.filter(b =>
+                b.building.id === 'service-school').length;
+            const transportCount = state.placedBuildings.filter(b =>
+                b.building.id.includes('transport')).length;
+
+            if (residentialCount > 3 && schoolCount === 0) {
+                addWarning('Elementary school capacity needed. 1,200+ children require education access within 2km.');
+            }
+
+            if (state.population > 900000 && transportCount < 2) {
+                addWarning('Transportation infrastructure insufficient. Add metro stations for growing population.');
+            }
+
+            if (building.id.includes('industrial') && residentialCount > 0) {
+                addWarning('Industrial zone proximity warning. Maintain 500m buffer from residential areas or add green barrier.');
+            }
+
+            if (state.aqi > 80) {
+                addWarning('Air quality declining. Add green spaces or reduce industrial emissions.');
+            }
+
+            if (state.green < 15) {
+                addWarning('Green space ratio below healthy threshold. Add parks or urban forests.');
+            }
+        }
+
+        function addWarning(message) {
+            if (!state.warnings.includes(message)) {
+                state.warnings.push(message);
+                updateWarningsDisplay();
+            }
+        }
+
+        function updateWarningsDisplay() {
+            const container = document.getElementById('warnings');
+            const list = document.getElementById('warning-list');
+
+            if (state.warnings.length > 0) {
+                container.style.display = 'block';
+                list.innerHTML = state.warnings.map(warning => `
+                    <div class="warning-item">
+                        <svg class="warning-icon" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <div style="font-size: 13px; line-height: 1.5;">${warning}</div>
+                    </div>
+                `).join('');
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function resetSimulation() {
+            if (confirm('Reset entire simulation? This will clear all placed buildings.')) {
+                // Remove all placed buildings
+                state.placedBuildings.forEach(item => {
+                    if (map.getLayer(item.id)) {
+                        map.removeLayer(item.id);
+                    }
+                    if (map.getSource(item.id)) {
+                        map.removeSource(item.id);
+                    }
+                });
+
+                // Reset state
+                state = {
+                    score: 72,
+                    carbon: 118000,
+                    green: 22,
+                    aqi: 42,
+                    population: 842000,
+                    activeLayers: {},
+                    placedBuildings: [],
+                    warnings: []
+                };
+
+                // Update UI
+                document.getElementById('score').textContent = state.score;
+                document.getElementById('score-bar').style.width = `${state.score}%`;
+                document.getElementById('carbon').textContent = `${Math.floor(state.carbon / 1000)}k`;
+                document.getElementById('green').textContent = `${state.green}%`;
+                document.getElementById('aqi').textContent = state.aqi;
+                document.getElementById('population').textContent = `${Math.floor(state.population / 1000)}k`;
+
+                updateWarningsDisplay();
+
+                // Reset map view
+                map.flyTo({
+                    center: TOKYO_CENTER,
+                    zoom: 13,
+                    pitch: 60,
+                    bearing: -17.6,
+                    duration: 2000
+                });
+            }
+        }
+
+        function generateReport() {
+            const report = `
+TOKYO URBAN PLANNING REPORT
+Generated: ${new Date().toLocaleString()}
+
+═══════════════════════════════════════
+
+SUSTAINABILITY METRICS
+Overall Score: ${state.score}/100
+Carbon Footprint: ${Math.floor(state.carbon / 1000)}k tons/year
+Green Space Ratio: ${state.green}%
+Air Quality Index: ${state.aqi}
+Population: ${Math.floor(state.population / 1000)}k
+
+═══════════════════════════════════════
+
+INFRASTRUCTURE SUMMARY
+Total Buildings Placed: ${state.placedBuildings.length}
+
+Residential: ${state.placedBuildings.filter(b => b.building.id.includes('residential')).length}
+Commercial: ${state.placedBuildings.filter(b => b.building.id.includes('commercial')).length}
+Industrial: ${state.placedBuildings.filter(b => b.building.id.includes('industrial')).length}
+Services: ${state.placedBuildings.filter(b => b.building.id.includes('service')).length}
+Transportation: ${state.placedBuildings.filter(b => b.building.id.includes('transport')).length}
+Green Spaces: ${state.placedBuildings.filter(b => b.building.id.includes('green')).length}
+Energy: ${state.placedBuildings.filter(b => b.building.id.includes('energy')).length}
+
+═══════════════════════════════════════
+
+CURRENT WARNINGS
+${state.warnings.length > 0 ? state.warnings.map((w, i) => `${i + 1}. ${w}`).join('\n') : 'No active warnings'}
+
+═══════════════════════════════════════
+
+RECOMMENDATIONS
+${state.score > 80 ? '✓ Excellent sustainability! Maintain current practices.' : ''}
+${state.score <= 80 && state.score > 60 ? '• Consider adding more green spaces to improve air quality.' : ''}
+${state.score <= 60 ? '⚠ Critical improvements needed. Focus on reducing carbon emissions and adding green infrastructure.' : ''}
+${state.green < 20 ? '⚠ Increase green space ratio to at least 25% for healthy urban environment.' : ''}
+${state.aqi > 70 ? '⚠ Air quality requires immediate attention. Add parks and reduce industrial emissions.' : ''}
+            `.trim();
+
+            alert(report);
+            console.log(report);
+        }
+
+        // Draggable/Resizable overlays
+        function makeDraggable(elementId) {
+            const element = document.getElementById(elementId);
+            const header = document.getElementById(`${elementId}-header`);
+
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+
+            header.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+                element.style.bottom = 'auto';
+                element.style.right = 'auto';
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        function toggleMinimize(elementId) {
+            const element = document.getElementById(elementId);
+            element.classList.toggle('minimized');
+
+            const btn = element.querySelector('.overlay-btn');
+            btn.textContent = element.classList.contains('minimized') ? '+' : '−';
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            initMap();
+            renderLayerToggles();
+            renderBuildings();
+            makeDraggable('instructions');
+            makeDraggable('warnings');
+            makeDraggable('active-layers');
+        });
+    </script>
+</body>
+</html>
