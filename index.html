@@ -729,7 +729,7 @@
                 container: 'map',
                 style: 'https://demotiles.maplibre.org/globe.json',
                 center: TOKYO_CENTER,
-                zoom: 2,
+                zoom: 7,
                 maxZoom: 12,
                 pitch: 20,
                 bearing: -17.6,
@@ -743,6 +743,7 @@
             map.on('load', () => {
                 add3DBuildings();
                 addDataLayers();
+
 
                 // Create custom marker element for Tokyo flag
                 const markerEl = document.createElement('div');
@@ -766,8 +767,9 @@
                 .addTo(map);
                 
                 setTimeout(() => {
-                    document.getElementById('loading').classList.add('hidden');
-                }, 1000);
+    document.getElementById('loading').classList.add('hidden');
+    fetchAIGreeting(); // 👈 This triggers the AI greeting
+}, 1000);
 
                 
             });
@@ -843,6 +845,8 @@
                 });
             });
         }
+        // Global registry of placed buildings for quick lookup / export
+window.buildingRegistry = window.buildingRegistry || [];
 
         function renderLayerToggles() {
             const container = document.getElementById('layer-toggles');
@@ -1036,80 +1040,142 @@ function metersToDegreeDeltas(meters, latDeg) {
   return { dLat, dLon };
 }
 
+function showBuildingPopup(buildingId, atLngLat) {
+  const rec = window.buildingRegistry.find(b => b.id === buildingId);
+  if (!rec) return;
+  const ll = atLngLat || rec.lngLat;
+
+  const html = `
+    <div style="min-width:240px">
+      <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:20px">${rec.icon || '🏢'}</span>
+        <span>${rec.name || 'Building'}</span>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:#94a3b8;line-height:1.6">
+        <div>📍 <b>Lat/Lng:</b> ${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}</div>
+        <div>📐 <b>Footprint across flats:</b> ${Math.round(rec.dimension * 50)} m</div>
+        ${Number.isFinite(rec.air) ? `<div>🌪️ <b>Air pollution (ton):</b> ${rec.air}</div>` : ''}
+        ${Number.isFinite(rec.water) ? `<div>💧 <b>Water contributed (m3):</b> ${rec.water}</div>` : ''}
+        ${Number.isFinite(rec.energy) ? `<div>⚡ <b>Energy Using (kW)):</b> ${rec.energy}</div>` : ''}
+        ${Number.isFinite(rec.pop) ? `<div>👥 <b>Population: </b> ${rec.pop} </div>` : ''}
+      </div>
+    </div>
+  `;
+
+  new maplibregl.Popup({ closeOnClick: true })
+    .setLngLat([ll.lng, ll.lat])
+    .setHTML(html)
+    .addTo(map);
+}
+
     // Modified placeBuilding
-    function placeBuilding(building, lngLat) {
-        // Add marker for the building
-        const el = document.createElement('div');
-        el.className = 'building-marker';
-        el.innerHTML = building.icon;
-        el.style.fontSize = '32px';
-        el.style.cursor = 'pointer';
-        el.title = building.name;
+   // Modified placeBuilding
+function placeBuilding(building, lngLat) {
+  // Unique id FIRST so we can bind events to it
+  const buildingId = `building-${Date.now()}`;
 
-        new maplibregl.Marker({ element: el })
-            .setLngLat(lngLat)
-            .addTo(map);
+  // Add marker for the building
+  const el = document.createElement('div');
+  el.className = 'building-marker';
+  el.innerHTML = building.icon;
+  el.style.fontSize = '32px';
+  el.style.cursor = 'pointer';
+  el.title = building.name;
 
-        // Add 3D building extrusion
-        const buildingId = `building-${Date.now()}`;
+  const marker = new maplibregl.Marker({ element: el })
+    .setLngLat(lngLat)
+    .addTo(map);
 
-        // ✅ Use per-building dimension (meters). Default 120m if not provided.
-        const sizeMeters = Number.isFinite(building.dimension) ? building.dimension : 120;
-        const half = sizeMeters *50 / 2;
-        const { dLat, dLon } = metersToDegreeDeltas(half, lngLat.lat);
+  // Show popup when clicking the emoji marker
+  el.addEventListener('click', () => showBuildingPopup(buildingId));
 
-// Hexagon footprint (flat-top) instead of rectangle
-const base = Number.isFinite(building.dimension) ? building.dimension : 120;
-const widthAcrossFlats = base * 50;            // keep your existing scale factor
-const R = widthAcrossFlats / Math.sqrt(3);     // hex circumradius
-const latRad = lngLat.lat * Math.PI / 180;
-const mToDegLat = m => m / 111320;
-const mToDegLon = m => m / (111320 * Math.cos(latRad) || 1e-9);
+  // ✅ Use per-building dimension (meters). Default 120m if not provided.
+  const sizeMeters = Number.isFinite(building.dimension) ? Number(building.dimension) : 120;
+  const half = sizeMeters * 50 / 2;
+  const { dLat, dLon } = metersToDegreeDeltas(half, lngLat.lat); // (kept in case you reuse)
 
-// angles for flat-top hex: 30°, 90°, 150°, 210°, 270°, 330°
-const ring = [30, 90, 150, 210, 270, 330].map(a => {
-  const t = a * Math.PI / 180;
-  const dx = R * Math.cos(t);   // meters east
-  const dy = R * Math.sin(t);   // meters north
-  return [lngLat.lng + mToDegLon(dx), lngLat.lat + mToDegLat(dy)];
-});
-ring.push(ring[0]); // close polygon
+  // Hexagon footprint (flat-top)
+  const base = sizeMeters;
+  const widthAcrossFlats = base * 50;            // your existing scale factor
+  const R = widthAcrossFlats / Math.sqrt(3);     // hex circumradius
+  const latRad = lngLat.lat * Math.PI / 180;
+  const mToDegLat = m => m / 111320;
+  const mToDegLon = m => m / (111320 * Math.cos(latRad) || 1e-9);
 
-const coords = [ring];
+  const ring = [30, 90, 150, 210, 270, 330].map(a => {
+    const t = a * Math.PI / 180;
+    const dx = R * Math.cos(t);   // meters east
+    const dy = R * Math.sin(t);   // meters north
+    return [lngLat.lng + mToDegLon(dx), lngLat.lat + mToDegLat(dy)];
+  });
+  ring.push(ring[0]); // close polygon
 
+  const coords = [ring];
 
-        map.addSource(buildingId, {
-            type: 'geojson',
-            data: {
-            type: 'Feature',
-            geometry: { type: 'Polygon', coordinates: coords },
-            properties: { height: building.height*10000 }
-            }
-        });
+  // Extrusion source
+  const heightMeters = Number.isFinite(building.height) ? Number(building.height) : 80;
 
-        map.addLayer({
-            id: buildingId,
-            type: 'fill-extrusion',
-            source: buildingId,
-            paint: {
-            'fill-extrusion-color': building.color,
-            'fill-extrusion-height': ['coalesce', ['get', 'height'], building.height],
-            'fill-extrusion-opacity': 0.9
-            }
-        });
-
-        // Update state
-        state.placedBuildings.push({ building, lngLat, id: buildingId });
-        updateMetrics(building);
-        checkAndAddWarnings(building, lngLat);
-
-        // Reset selection
-        state.selectedBuilding = null;
-        map.getCanvas().style.cursor = '';
-        document.querySelectorAll('.building-item').forEach(item => {
-            item.style.borderColor = '#334155';
-        });
+  map.addSource(buildingId, {
+    type: 'geojson',
+    data: {
+      type: 'Feature',
+      id: buildingId,
+      geometry: { type: 'Polygon', coordinates: coords },
+      properties: { height: heightMeters * 5000 } // your chosen scale
     }
+  });
+
+  // Extrusion layer
+  map.addLayer({
+    id: buildingId,
+    type: 'fill-extrusion',
+    source: buildingId,
+    paint: {
+      'fill-extrusion-color': building.color,
+      'fill-extrusion-height': ['coalesce', ['get', 'height'], heightMeters],
+      'fill-extrusion-base': 0,
+      'fill-extrusion-opacity': 0.9
+    }
+  });
+
+  // Click on the 3D polygon -> popup
+  map.on('click', buildingId, (e) => showBuildingPopup(buildingId, e.lngLat));
+  map.on('mouseenter', buildingId, () => (map.getCanvas().style.cursor = 'pointer'));
+  map.on('mouseleave', buildingId, () => (map.getCanvas().style.cursor = ''));
+
+  // Save record globally and in state
+  const record = {
+    id: buildingId,
+    name: building.name,
+    type: building.id,
+    icon: building.icon,
+    color: building.color,
+    cost: building.cost,
+    air: building.air,
+    water: building.water,
+    energy: building.energy,
+    pop: building.pop,
+    height: heightMeters,
+    dimension: base,
+    lngLat: { lng: lngLat.lng, lat: lngLat.lat },
+    marker
+  };
+
+  state.placedBuildings.push(record);
+  window.buildingRegistry.push(record); // <— global array
+
+  // Metrics + warnings
+  updateMetrics(building);
+  checkAndAddWarnings(building, lngLat);
+
+  // Reset selection
+  state.selectedBuilding = null;
+  map.getCanvas().style.cursor = '';
+  document.querySelectorAll('.building-item').forEach(item => {
+    item.style.borderColor = '#334155';
+  });
+}
+
 
 
         function updateMetrics(building) {
@@ -1165,6 +1231,40 @@ const coords = [ring];
                 updateWarningsDisplay();
             }
         }
+        // tenzin shit 1
+        async function fetchAIGreeting() {
+    try {
+        const response = await fetch('/groq', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'llama3-8b-8192',
+                messages: [{
+                    role: 'user',
+                    content: 'You are an AI urban planner for Tokyo. Greet the user in one friendly sentence (max 80 characters).'
+                }],
+                max_tokens: 30,
+                temperature: 0.7
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) {
+            console.warn('Greeting failed:', data.error);
+            addWarning("Hello! I'm your AI Urban Planner. 🌆");
+            return;
+        }
+
+        let greeting = data.choices?.[0]?.message?.content?.trim() || "Hello! I'm your AI Urban Planner.";
+        greeting = greeting.replace(/^["'\n]+|["'\n]+$/g, '');
+        if (greeting.length > 100) greeting = greeting.substring(0, 97) + "...";
+
+        addWarning(greeting);
+    } catch (err) {
+        console.warn('AI greeting failed:', err);
+        addWarning("Hello! I'm your AI Urban Planner. 🌆");
+    }
+}
 
         function updateWarningsDisplay() {
             const container = document.getElementById('warnings');
