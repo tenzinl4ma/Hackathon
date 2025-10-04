@@ -653,6 +653,11 @@
             }
         }
 
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+        }
+
         
     </style>
 </head>
@@ -1143,6 +1148,7 @@ function renderBuildings() {
         }
         /*Tenzin shit 2*/
         // Returns buildings within radiusMeters (approximate, for small areas)
+
 function getNearbyBuildings(lngLat, radiusMeters = 500) {
   const nearby = [];
   const R = 6371000; // Earth radius in meters
@@ -1164,6 +1170,36 @@ function getNearbyBuildings(lngLat, radiusMeters = 500) {
     }
   }
   return nearby.sort((a, b) => a.distance - b.distance);
+}
+// Check if a building would collide with existing buildings
+function checkCollision(lngLat, newBuildingDimension) {
+    const newRadius = (newBuildingDimension * 50) / 2; // Half the width in meters
+    
+    for (const placed of state.placedBuildings) {
+        const placedRadius = (placed.dimension * 50) / 2;
+        const minDistance = newRadius + placedRadius + 10; // 10m buffer
+        
+        // Calculate distance between centers
+        const R = 6371000; // Earth radius in meters
+        const dLat = (placed.lngLat.lat - lngLat.lat) * Math.PI / 180;
+        const dLon = (placed.lngLat.lng - lngLat.lng) * Math.PI / 180;
+        const lat1 = lngLat.lat * Math.PI / 180;
+        const lat2 = placed.lngLat.lat * Math.PI / 180;
+        
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        
+        if (distance < minDistance) {
+            return {
+                collides: true,
+                collidingBuilding: placed
+            };
+        }
+    }
+    
+    return { collides: false };
 }
 
 
@@ -1227,10 +1263,41 @@ async function runAIUrbanAnalysis() {
   }
 }
 
-
+function createRedIndicator() {
+    const el = document.createElement('div');
+    el.style.width = '40px';
+    el.style.height = '40px';
+    el.style.borderRadius = '50%';
+    el.style.background = 'rgba(239, 68, 68, 0.6)';
+    el.style.border = '3px solid #ef4444';
+    el.style.animation = 'pulse 0.5s ease-in-out';
+    return el;
+}
 
    // Modified placeBuilding
 function placeBuilding(building, lngLat) {
+        // Check for collision FIRST
+    const buildingDimension = Number.isFinite(building.dimension) ? Number(building.dimension) : 120;
+    const collision = checkCollision(lngLat, buildingDimension);
+    
+    if (collision.collides) {
+        addWarning(`Cannot place ${building.name} here - too close to ${collision.collidingBuilding.name}. Need at least 10m clearance.`, 3500);
+        
+        // Flash red indicator
+        const tempMarker = new maplibregl.Marker({ 
+            element: createRedIndicator() 
+        })
+        .setLngLat(lngLat)
+        .addTo(map);
+        
+        setTimeout(() => tempMarker.remove(), 100);
+        
+        // Reset selection
+        state.selectedBuilding = null;
+        map.getCanvas().style.cursor = '';
+        return; // Don't place the building
+    }
+    
   // Unique id FIRST so we can bind events to it
   const buildingId = `building-${Date.now()}`;
 
@@ -1312,14 +1379,14 @@ function placeBuilding(building, lngLat) {
     color: building.color,
     cost: building.cost,
     air: building.air,
-    energy: building.energy,
     water: building.water,
     energy: building.energy,
     pop: building.pop,
-
+    height: heightMeters,
+    dimension: sizeMeters,  // ← This was missing!
     lngLat: { lng: lngLat.lng, lat: lngLat.lat },
     marker
-  };
+};
 
   state.placedBuildings.push(record);
   window.buildingRegistry.push(record); // <— global array
@@ -1346,10 +1413,7 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
             state.population += building.pop;
             document.getElementById('population').textContent = `${Math.floor(state.population / 1000)}k`;
             
-            // Update carbon
-            state.carbon += building.carbon;
-            document.getElementById('carbon').textContent = `${Math.floor(state.carbon / 1000)}k`;
-            
+          
             // Update green space
             if (building.carbon < 0) {
                 state.green += 2;
@@ -1361,13 +1425,11 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
             document.getElementById('green').textContent = `${state.green}%`;
             document.getElementById('air').textContent = state.air;
             
-            // Update overall score
-            const carbonScore = Math.max(0, 100 - (state.carbon / 2000));
+            
             const greenScore = state.green * 1.2;
             const airScore = Math.max(0, 100 - state.air);
             
-            state.score = Math.floor((carbonScore + greenScore + airScore) / 3);
-            state.score = Math.max(0, Math.min(100, state.score));
+            
             
             document.getElementById('score').textContent = state.score;
             document.getElementById('score-bar').style.width = `${state.score}%`;
@@ -1388,9 +1450,33 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
         
         /* till here change*/
 
-        function addWarning(message) {
-            if (!state.warnings.includes(message)) {
-                state.warnings.push(message);
+        function addWarning(message, duration = null) {
+            // Check if this exact message already exists
+            const existingWarning = state.warnings.find(w => w.message === message);
+            if (existingWarning) return;
+            
+            const warningId = `warning-${Date.now()}`;
+            const warningObj = {
+                id: warningId,
+                message: message,
+                timestamp: Date.now()
+            };
+            
+            state.warnings.push(warningObj);
+            updateWarningsDisplay();
+            
+            // If duration is specified, auto-remove after that time
+            if (duration && duration > 0) {
+                setTimeout(() => {
+                    removeWarning(warningId);
+                }, duration);
+            }
+        }
+
+        function removeWarning(warningId) {
+            const index = state.warnings.findIndex(w => w.id === warningId);
+            if (index > -1) {
+                state.warnings.splice(index, 1);
                 updateWarningsDisplay();
             }
         }
@@ -1441,14 +1527,19 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
             
             if (state.warnings.length > 0) {
                 container.style.display = 'block';
-                list.innerHTML = state.warnings.map(warning => `
-                    <div class="warning-item">
-                        <svg class="warning-icon" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                        </svg>
-                        <div style="font-size: 13px; line-height: 1.5;">${warning}</div>
-                    </div>
-                `).join('');
+                list.innerHTML = state.warnings.map(warning => {
+                    // Handle both old string format and new object format
+                    const message = typeof warning === 'string' ? warning : warning.message;
+                    
+                    return `
+                        <div class="warning-item">
+                            <svg class="warning-icon" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <div style="font-size: 13px; line-height: 1.5;">${message}</div>
+                        </div>
+                    `;
+                }).join('');
             } else {
                 container.style.display = 'none';
             }
@@ -1509,7 +1600,6 @@ Generated: ${new Date().toLocaleString()}
 
 SUSTAINABILITY METRICS
 Overall Score: ${state.score}/100
-Carbon Footprint: ${Math.floor(state.carbon / 1000)}k tons/year
 Green Space Ratio: ${state.green}%
 Air Quality Index: ${state.air}
 Population: ${Math.floor(state.population / 1000)}k
