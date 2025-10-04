@@ -1,0 +1,10 @@
+__pycache__/
+pm25_tiles_tokyo/
+.venv/
+.env/
+..venv/
+venv/*
+env/
+..__pycache__/
+.__pycache__/
+..ali/

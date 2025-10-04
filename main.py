@@ -57,7 +57,7 @@ The data is below:
         return jsonify({"error": "Request must be valid JSON"}), 400
 
     try:
-        resp = requests.post(
+        response = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",  # ← NO TRAILING SPACES
             headers={
                 "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -86,9 +86,9 @@ How to reason (abstract rules; no formulas):
 • Recommend one immediate action each turn; if no safe move exists, say “Hold.”
 
 Output style (strict):
-• Return 1–3 short, complete sentences. No lists, no JSON, no emojis, no markdown.
+• Return exactly one, complete sentences. No lists, no JSON, no emojis, no markdown.
 • Start with a concrete next action (“Add Small Reservoir…”, “Place Wind Farm…”, “Build High-Rise Complex…”, or “Hold.”).
-• Follow with a brief reason referencing water balance and/or air impact and, when relevant, density, parks/schools, factories, or money.
+• Follow with a very brief reason referencing water balance and/or air impact and, when relevant, density, parks/schools, factories, or money.
 
 Examples:
 Add Small Reservoir now. Your net water use is positive; stabilize supply before expanding housing.
@@ -102,7 +102,8 @@ The data is below:
             },
             timeout=10
         )
-        return jsonify(resp.json()), resp.status_code
+        print(response.json()["choices"][0]["message"]["content"].strip())
+        return response.json()["choices"][0]["message"]["content"].strip()
     except Exception as e:
         print("Groq error:", str(e))
         return jsonify({"error": "Failed to reach Groq API"}), 500
@@ -133,7 +134,8 @@ def ai_test():
             },
             timeout=10
         )
-        data = response.json()
+        data = response.json()["choices"][0]["message"]["content"].strip()
+        print(data)
         print("Groq full response:", data)  # 🔥 THIS IS CRITICAL
 
         if not response.ok:

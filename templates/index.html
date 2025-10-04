@@ -658,6 +658,10 @@
             50% { transform: scale(1.5); opacity: 0.5; }
         }
 
+        .building-preview {
+            pointer-events: none;
+            z-index: 1000;
+        }
         
     </style>
 </head>
@@ -852,6 +856,7 @@
     </div>
 
     <script>
+
         const TOKYO_CENTER = [139.76685988006122, 35.681665376337875];
         
         const layers = [
@@ -1109,16 +1114,118 @@ function renderBuildings() {
             dragGhost.textContent = currentDraggedBuilding.icon;
             document.body.appendChild(dragGhost);
             
-            // Update ghost position
-            document.addEventListener('dragover', updateGhostPosition);
+            // Create preview layer on map
+            previewLayerId = 'building-preview';
+            const dimension = Number.isFinite(currentDraggedBuilding.dimension) 
+                ? Number(currentDraggedBuilding.dimension) : 120;
+            
+            map.addSource(previewLayerId, {
+                type: 'geojson',
+                data: {
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Polygon',
+                        coordinates: [[]]
+                    }
+                }
+            });
+            
+            map.addLayer({
+                id: previewLayerId,
+                type: 'fill',
+                source: previewLayerId,
+                paint: {
+                    'fill-color': currentDraggedBuilding.color || '#3b82f6',
+                    'fill-opacity': 0.3
+                }
+            });
+            
+            map.addLayer({
+                id: previewLayerId + '-outline',
+                type: 'line',
+                source: previewLayerId,
+                paint: {
+                    'line-color': currentDraggedBuilding.color || '#3b82f6',
+                    'line-width': 2,
+                    'line-opacity': 0.8
+                }
+            });
+            
+            // Update preview on mouse move
+            document.addEventListener('dragover', updatePreview);
             
             e.dataTransfer.effectAllowed = 'copy';
             e.dataTransfer.setData('text/plain', buildingId);
         }
 
+        function updatePreview(e) {
+            if (dragGhost) {
+                dragGhost.style.left = e.clientX + 'px';
+                dragGhost.style.top = e.clientY + 'px';
+            }
+            
+            // Update map preview
+            if (previewLayerId && currentDraggedBuilding && map.getSource(previewLayerId)) {
+                const mapEl = map.getContainer();
+                const rect = mapEl.getBoundingClientRect();
+                
+                // Check if mouse is over map
+                if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                    
+                    const point = {
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top
+                    };
+                    const lngLat = map.unproject(point);
+                    
+                    // Calculate hexagon coordinates
+                    const dimension = Number.isFinite(currentDraggedBuilding.dimension) 
+                        ? Number(currentDraggedBuilding.dimension) : 120;
+                    const widthAcrossFlats = dimension * 50;
+                    const R = widthAcrossFlats / Math.sqrt(3);
+                    const latRad = lngLat.lat * Math.PI / 180;
+                    const mToDegLat = m => m / 111320;
+                    const mToDegLon = m => m / (111320 * Math.cos(latRad) || 1e-9);
+                    
+                    const ring = [30, 90, 150, 210, 270, 330].map(a => {
+                        const t = a * Math.PI / 180;
+                        const dx = R * Math.cos(t);
+                        const dy = R * Math.sin(t);
+                        return [lngLat.lng + mToDegLon(dx), lngLat.lat + mToDegLat(dy)];
+                    });
+                    ring.push(ring[0]);
+                    
+                    // Update preview geometry
+                    map.getSource(previewLayerId).setData({
+                        type: 'Feature',
+                        geometry: {
+                            type: 'Polygon',
+                            coordinates: [ring]
+                        }
+                    });
+                }
+            }
+        }
+
         function handleDragEnd(e) {
             e.currentTarget.classList.remove('dragging');
-            document.removeEventListener('dragover', updateGhostPosition);
+            document.removeEventListener('dragover', updatePreview);
+            
+            // Remove preview layers
+            if (previewLayerId) {
+                if (map.getLayer(previewLayerId)) {
+                    map.removeLayer(previewLayerId);
+                }
+                if (map.getLayer(previewLayerId + '-outline')) {
+                    map.removeLayer(previewLayerId + '-outline');
+                }
+                if (map.getSource(previewLayerId)) {
+                    map.removeSource(previewLayerId);
+                }
+                previewLayerId = null;
+            }
+            
             if (dragGhost && !dragGhost.parentElement) {
                 // Ghost was already removed by drop
             } else if (dragGhost) {
@@ -1127,12 +1234,6 @@ function renderBuildings() {
             }
         }
 
-        function updateGhostPosition(e) {
-            if (dragGhost) {
-                dragGhost.style.left = e.clientX + 'px';
-                dragGhost.style.top = e.clientY + 'px';
-            }
-        }
 
         function selectBuilding(buildingId) {
             const building = buildings.find(b => b.id === buildingId);
@@ -1276,7 +1377,7 @@ function createRedIndicator() {
 
    // Modified placeBuilding
 function placeBuilding(building, lngLat) {
-    runAIUrbanAnalysis();
+    runAIUrbanAnalysis().then(msg => { if (msg) addWarning(msg, 3000); });
         // Check for collision FIRST
     const buildingDimension = Number.isFinite(building.dimension) ? Number(building.dimension) : 120;
     const collision = checkCollision(lngLat, buildingDimension);
