@@ -103,7 +103,9 @@ The data is below:
             timeout=10
         )
         print(response.json()["choices"][0]["message"]["content"].strip())
-        return response.json()["choices"][0]["message"]["content"].strip()
+        return jsonify({
+            "reply": response.json()["choices"][0]["message"]["content"].strip()
+        })
     except Exception as e:
         print("Groq error:", str(e))
         return jsonify({"error": "Failed to reach Groq API"}), 500
