@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tokyo Urban Planner 3D - Sustainable City Design</title>
+    <script src="./buildings.js"></script>
     <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
     <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
     <style>
@@ -707,33 +708,6 @@
     const BOUNDS_NE = [TOKYO_STATION[0] + LON_DELTA, TOKYO_STATION[1] + LAT_DELTA];
     const TOKYO_STATION_BOUNDS = [BOUNDS_SW, BOUNDS_NE];
     
-    const buildings = [
-        { id: 'residential-mid', name: 'Apartment Complex', icon: '🏢', cost: 200, carbon: 80, pop: 50, height: 15, dimension: 800 },
-        { id: 'residential-high', name: 'High-Rise Tower', icon: '🏙️', cost: 800, carbon: 300, pop: 500, height: 40, dimension: 200},
-
-        { id: 'commercial-shop', name: 'Shopping District', icon: '🛍️', cost: 150, carbon: 60, pop: 0, height: 8, dimension: 100 },
-        { id: 'commercial-office', name: 'Office Building', icon: '🏢', cost: 400, carbon: 150, pop: 0, height: 25, dimension: 150 },
-
-        { id: 'industrial-light', name: 'Light Industry', icon: '🏭', cost: 300, carbon: 400, pop: 0, height: 12, dimension: 300 },
-        { id: 'industrial-tech', name: 'Tech Hub', icon: '💻', cost: 500, carbon: 200, pop: 0, height: 18, dimension: 250 },
-
-        { id: 'service-school', name: 'School', icon: '🏫', cost: 250, carbon: 50, pop: 0, height: 10, dimension: 120 },
-        { id: 'service-hospital', name: 'Hospital', icon: '🏥', cost: 500, carbon: 100, pop: 0, height: 15, dimension: 150 },
-        { id: 'service-fire', name: 'Fire Station', icon: '🚒', cost: 180, carbon: 30, pop: 0, height: 8, dimension: 80 },
-
-        { id: 'transport-station', name: 'Metro Station', icon: '🚇', cost: 600, carbon: 80, pop: 0, height: 6, dimension: 200 },
-        { id: 'transport-rail', name: 'Rail Terminal', icon: '🚄', cost: 800, carbon: 120, pop: 0, height: 10, dimension: 400 },
-
-        { id: 'green-park', name: 'Urban Park', icon: '🌳', cost: 100, carbon: -50, pop: 0, height: 2, dimension: 250 },
-        { id: 'green-forest', name: 'Urban Forest', icon: '🌲', cost: 150, carbon: -100, pop: 0, height: 3, dimension: 400 },
-
-        { id: 'energy-solar', name: 'Solar Farm', icon: '☀️', cost: 350, carbon: -200, pop: 0, height: 4, dimension: 500 },
-        { id: 'energy-wind', name: 'Wind Turbines', icon: '💨', cost: 400, carbon: -250, pop: 0, height: 30, dimension: 600 },
-
-        { id: 'utility-water', name: 'Water Treatment', icon: '💧', cost: 450, carbon: 100, pop: 0, height: 12, dimension: 300 },
-        { id: 'utility-recycle', name: 'Recycling Center', icon: '♻️', cost: 200, carbon: -80, pop: 0, height: 8, dimension: 200 }
-    ];
-
 
         let map;
         let state = {
@@ -795,10 +769,7 @@
                     document.getElementById('loading').classList.add('hidden');
                 }, 1000);
 
-                setTimeout(() => {
-                    addWarning('Population density exceeds 15,000/km² in Shibuya. Consider adding metro stations within 500m radius.');
-                    addWarning('Heat island effect detected (+3.2°C). Add 0.5 hectares of green space to mitigate urban warming.');
-                }, 3000);
+                
             });
 
             // Handle map click for placement
@@ -998,6 +969,63 @@
             
             map.getCanvas().style.cursor = 'crosshair';
         }
+        /*Tenzin shit 2*/
+        // Returns buildings within radiusMeters (approximate, for small areas)
+function getNearbyBuildings(lngLat, radiusMeters = 500) {
+  const nearby = [];
+  const R = 6371000; // Earth radius in meters
+
+  for (const placed of state.placedBuildings) {
+    const dLat = (placed.lngLat.lat - lngLat.lat) * Math.PI / 180;
+    const dLon = (placed.lngLat.lng - lngLat.lng) * Math.PI / 180;
+    const lat1 = lngLat.lat * Math.PI / 180;
+    const lat2 = placed.lngLat.lat * Math.PI / 180;
+
+    // Haversine formula for accurate short-distance calculation
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    if (distance <= radiusMeters) {
+      nearby.push({ ...placed, distance });
+    }
+  }
+  return nearby.sort((a, b) => a.distance - b.distance);
+}
+
+
+        /*Tenzin shit 2*/
+        function checkAndAddWarnings(building, lngLat) {
+    // Example 1: Too many industrial buildings nearby → air quality warning
+    const nearby = getNearbyBuildings(lngLat, 400); // within 400m
+    const industrialCount = nearby.filter(p => p.building.id.includes('industrial')).length;
+    if (industrialCount >= 2 && building.id.includes('industrial')) {
+        addWarning('⚠️ High industrial density detected. Risk of elevated air pollution.');
+    }
+
+    // Example 2: Placing residential without nearby services
+    if (building.id.includes('residential')) {
+        const hasNearbyService = nearby.some(p => 
+            p.building.id.includes('service') || p.building.id.includes('transport')
+        );
+        if (!hasNearbyService) {
+            addWarning('🏘️ New residential area lacks nearby schools, hospitals, or transit.');
+        }
+    }
+
+    // Example 3: Low green space ratio
+    if (state.green < 15 && building.carbon > 0) {
+        addWarning('🌳 Green space below 15%. Add parks or urban forests to improve sustainability.');
+    }
+
+    // Example 4: High population density
+    const popDensity = state.population / 100; // rough proxy (Tokyo area ~100 km² in sim)
+    if (popDensity > 15000 && building.pop > 0) {
+        addWarning('👥 Population density exceeds 15,000/km². Consider expanding transit access.');
+    }
+}
+
 
         // Helper (add once near your other utils)
 function metersToDegreeDeltas(meters, latDeg) {
@@ -1027,7 +1055,7 @@ function metersToDegreeDeltas(meters, latDeg) {
 
         // ✅ Use per-building dimension (meters). Default 120m if not provided.
         const sizeMeters = Number.isFinite(building.dimension) ? building.dimension : 120;
-        const half = sizeMeters *100 / 2;
+        const half = sizeMeters *50 / 2;
         const { dLat, dLon } = metersToDegreeDeltas(half, lngLat.lat);
 
         const coords = [[
@@ -1052,8 +1080,7 @@ function metersToDegreeDeltas(meters, latDeg) {
             type: 'fill-extrusion',
             source: buildingId,
             paint: {
-            'fill-extrusion-color':
-                building.carbon < 0 ? '#10b981' : (building.carbon > 200 ? '#ef4444' : '#3b82f6'),
+            'fill-extrusion-color': building.color,
             'fill-extrusion-height': ['coalesce', ['get', 'height'], building.height],
             'fill-extrusion-opacity': 0.9
             }
@@ -1062,7 +1089,7 @@ function metersToDegreeDeltas(meters, latDeg) {
         // Update state
         state.placedBuildings.push({ building, lngLat, id: buildingId });
         updateMetrics(building);
-        checkAndAddWarnings(building);
+        checkAndAddWarnings(building, lngLat);
 
         // Reset selection
         state.selectedBuilding = null;
@@ -1117,36 +1144,8 @@ function metersToDegreeDeltas(meters, latDeg) {
             scoreEl.style.webkitTextFillColor = 'transparent';
         }
         /* about the groq api, this is to be change*/
-        async function checkAndAddWarnings(building) {
-    // === Rule-based warnings ===
-    const residentialCount = state.placedBuildings.filter(b => 
-        b.building.id.includes('residential')).length;
-    const schoolCount = state.placedBuildings.filter(b => 
-        b.building.id === 'service-school').length;
-    const transportCount = state.placedBuildings.filter(b => 
-        b.building.id.includes('transport')).length;
-
-    if (residentialCount > 3 && schoolCount === 0) {
-        addWarning('Elementary school capacity needed. 1,200+ children require education access within 2km.');
-    }
-    if (state.population > 900000 && transportCount < 2) {
-        addWarning('Transportation infrastructure insufficient. Add metro stations for growing population.');
-    }
-    if (building.id.includes('industrial') && residentialCount > 0) {
-        addWarning('Industrial zone proximity warning. Maintain 500m buffer from residential areas or add green barrier.');
-    }
-    if (state.aqi > 80) {
-        addWarning('Air quality declining. Add green spaces or reduce industrial emissions.');
-    }
-    if (state.green < 15) {
-        addWarning('Green space ratio below healthy threshold. Add parks or urban forests.');
-    }
-
-    // === TEST AI MESSAGE ===
-    addWarning('🧠 This is AI analysis (test message).');
-}
-
-         /* till here change*/
+        
+        /* till here change*/
 
         function addWarning(message) {
             if (!state.warnings.includes(message)) {
