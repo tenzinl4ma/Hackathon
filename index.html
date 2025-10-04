@@ -1058,13 +1058,25 @@ function metersToDegreeDeltas(meters, latDeg) {
         const half = sizeMeters *50 / 2;
         const { dLat, dLon } = metersToDegreeDeltas(half, lngLat.lat);
 
-        const coords = [[
-            [lngLat.lng - dLon, lngLat.lat - dLat],
-            [lngLat.lng + dLon, lngLat.lat - dLat],
-            [lngLat.lng + dLon, lngLat.lat + dLat],
-            [lngLat.lng - dLon, lngLat.lat + dLat],
-            [lngLat.lng - dLon, lngLat.lat - dLat]
-        ]];
+// Hexagon footprint (flat-top) instead of rectangle
+const base = Number.isFinite(building.dimension) ? building.dimension : 120;
+const widthAcrossFlats = base * 50;            // keep your existing scale factor
+const R = widthAcrossFlats / Math.sqrt(3);     // hex circumradius
+const latRad = lngLat.lat * Math.PI / 180;
+const mToDegLat = m => m / 111320;
+const mToDegLon = m => m / (111320 * Math.cos(latRad) || 1e-9);
+
+// angles for flat-top hex: 30°, 90°, 150°, 210°, 270°, 330°
+const ring = [30, 90, 150, 210, 270, 330].map(a => {
+  const t = a * Math.PI / 180;
+  const dx = R * Math.cos(t);   // meters east
+  const dy = R * Math.sin(t);   // meters north
+  return [lngLat.lng + mToDegLon(dx), lngLat.lat + mToDegLat(dy)];
+});
+ring.push(ring[0]); // close polygon
+
+const coords = [ring];
+
 
         map.addSource(buildingId, {
             type: 'geojson',
