@@ -3,113 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tokyo Urban Planner 3D - Sustainable City Design</title>
+    <title>NASA Urban Planner - Sustainable City Design</title>
     <script src="{{ url_for('static', filename='building.js') }}"></script>
     <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
     <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
     <style>
-/* Collapsible catalog */
 #catalog-card .card-title {
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
 #catalog-card .chev {
   font-size: 12px;
   opacity: 0.8;
   transition: transform 0.2s ease;
 }
-
 #catalog-card.collapsed .chev {
   transform: rotate(-90deg);
 }
-
-/* Hide list when collapsed */
 #catalog-card.collapsed #building-list {
   display: none;
 }
-
-        /* 2 items per row in the Building Catalog */
-/* Make only the Building Catalog list scroll, and keep it 1 column */
 #building-list {
   display: grid;
-  grid-template-columns: 1fr;   /* 1 column */
+  grid-template-columns: 1fr;   
   gap: 12px;
-
-  max-height: 100vh;             /* tweak as you like */
-  overflow-y: auto;             /* <-- scroll just the list */
-  -webkit-overflow-scrolling: touch; /* smoother on iOS */
-  padding-right: 6px;           /* room for scrollbar */
+  max-height: 100vh;             
+  overflow-y: auto;             
+  -webkit-overflow-scrolling: touch; 
+  padding-right: 6px;           
 }
-
-/* (optional) slimmer scrollbar styling */
 #building-list::-webkit-scrollbar { width: 8px; }
 #building-list::-webkit-scrollbar-thumb {
   background: #475569;
   border-radius: 4px;
 }
-
-
-/* (optional) fall back to 1 column on small screens */
 @media (max-width: 640px) {
   #building-list {
     grid-template-columns: 1fr;
   }
 }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             overflow: hidden;
             background: #0f172a;
             color: #e2e8f0;
         }
-
         #app {
             display: flex;
             height: 100vh;
+            transition: filter 0.5s ease;
+            filter: blur(0);
         }
-
-        /* Sidebar */
         #sidebar {
-            width: 300px;
+            width: 350px;
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             overflow-y: auto;
             border-right: 1px solid #334155;
             z-index: 10;
             box-shadow: 4px 0 20px rgba(0,0,0,0.3);
         }
-
         #sidebar::-webkit-scrollbar {
             width: 8px;
         }
-
         #sidebar::-webkit-scrollbar-track {
             background: #1e293b;
         }
-
         #sidebar::-webkit-scrollbar-thumb {
             background: #475569;
             border-radius: 4px;
         }
-
         .sidebar-content {
             padding: 24px;
         }
-
-        /* Top Collapsible Building Catalog */
         #top-catalog {
             position: fixed;
             top: 0;
-            left: 300px; /* right next to sidebar */
-            width: 300px; /* same width as sidebar */
+            left: 350px; 
+            width: 300px; 
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border-bottom: 1px solid #334155;
             border-right: 1px solid #334155;
@@ -117,7 +94,6 @@
             transition: all 0.3s ease;
             box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
         }
-
         #catalog-header {
             padding: 14px 20px;
             cursor: pointer;
@@ -130,53 +106,43 @@
             background: rgba(30, 41, 59, 0.6);
             transition: background 0.2s ease;
         }
-
         #catalog-header:hover {
             background: rgba(51, 65, 85, 0.8);
         }
-
         #catalog-header svg {
             width: 18px;
             height: 18px;
         }
-
         .chev {
             margin-left: auto;
             font-size: 12px;
             transition: transform 0.3s ease;
             opacity: 0.7;
         }
-
         #top-catalog.collapsed .chev {
             transform: rotate(-90deg);
         }
-
         #catalog-content {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease;
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
         }
-
         #top-catalog:not(.collapsed) #catalog-content {
             max-height: calc(100vh - 45px);
             overflow-y: auto;
             padding: 12px;
         }
-
         #catalog-content::-webkit-scrollbar {
             width: 6px;
         }
-
         #catalog-content::-webkit-scrollbar-thumb {
             background: #475569;
             border-radius: 3px;
         }
-
         .header {
             margin-bottom: 28px;
         }
-
         .header h1 {
             font-size: 26px;
             font-weight: 700;
@@ -188,13 +154,10 @@
             align-items: center;
             gap: 10px;
         }
-
         .header p {
             color: #94a3b8;
             font-size: 14px;
         }
-
-        /* Cards */
         .card {
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 1px solid #334155;
@@ -203,7 +166,6 @@
             margin-bottom: 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-
         .card-title {
             font-size: 18px;
             font-weight: 600;
@@ -212,18 +174,14 @@
             align-items: center;
             gap: 8px;
         }
-
         .icon {
             width: 20px;
             height: 20px;
         }
-
-        /* Metrics */
         .score-display {
             text-align: center;
             margin-bottom: 16px;
         }
-
         .score-value {
             font-size: 48px;
             font-weight: 700;
@@ -231,14 +189,12 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         .score-label {
             color: #94a3b8;
             font-size: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-
         .progress-bar {
             width: 100%;
             height: 8px;
@@ -247,26 +203,22 @@
             overflow: hidden;
             margin-top: 8px;
         }
-
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #10b981 0%, #059669 100%);
             transition: width 0.5s ease;
             border-radius: 4px;
         }
-
         .metrics-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
             margin-top: 16px;
         }
-
         .metric-box {
-            padding: 8px;        /* was 12px */
-            border-radius: 6px;  /* was 8px */
+            padding: 8px;        
+            border-radius: 6px;  
         }
-
         .metric-label {
             color: #64748b;
             font-size: 10px;
@@ -276,14 +228,11 @@
             align-items: center;
             gap: 4px;
         }
-
         .metric-value {
             font-size: 18px;
             font-weight: 600;
             color: #e2e8f0;
         }
-
-        /* Layer Toggles */
         .layer-toggle {
             display: flex;
             align-items: center;
@@ -296,23 +245,19 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
         .layer-toggle:hover {
             background: rgba(30, 41, 59, 0.6);
             border-color: #475569;
         }
-
         .layer-toggle.active {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             border-color: #60a5fa;
         }
-
         .layer-info {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-
         .toggle-switch {
             width: 44px;
             height: 24px;
@@ -321,11 +266,9 @@
             position: relative;
             transition: background 0.3s ease;
         }
-
         .layer-toggle.active .toggle-switch {
             background: #10b981;
         }
-
         .toggle-switch::after {
             content: '';
             position: absolute;
@@ -337,12 +280,9 @@
             left: 3px;
             transition: transform 0.3s ease;
         }
-
         .layer-toggle.active .toggle-switch::after {
             transform: translateX(20px);
         }
-
-        /* Buildings - Draggable */
         .building-item {
             background: rgba(30, 41, 59, 0.6);
             border: 1px solid #334155;
@@ -354,11 +294,9 @@
             position: relative;
             overflow: hidden;
         }
-
         .building-item:active {
             cursor: grabbing;
         }
-
         .building-item::before {
             content: '';
             position: absolute;
@@ -370,66 +308,51 @@
             transform: scaleX(0);
             transition: transform 0.3s ease;
         }
-
         .building-item:hover {
             background: rgba(51, 65, 85, 0.8);
             border-color: #60a5fa;
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
         }
-
         .building-item:hover::before {
             transform: scaleX(1);
         }
-
         .building-item.dragging {
             opacity: 0.5;
         }
-
         .building-header {
             display: flex;
             align-items: center;
             gap: 10px;
             margin-bottom: 8px;
         }
-
         .building-name {
             font-weight: 600;
             font-size: 15px;
         }
-
         .building-stats {
         display: grid;
-        grid-template-columns: 1fr;          /* one column */
-        grid-template-rows: repeat(3, auto); /* three rows */
+        grid-template-columns: 1fr;          
+        grid-template-rows: repeat(3, auto); 
         gap: 8px;
         font-size: 12px;
         color: #94a3b8;
         align-items: start;
         }
-
-
-
         .stat-positive {
             color: #10b981;
         }
-
         .stat-negative {
             color: #f59e0b;
         }
-
-        /* Map Container */
         #map-container {
             flex: 1;
             position: relative;
         }
-
         #map {
             width: 100%;
             height: 100%;
         }
-
-        /* Resizable Overlays */
         .overlay {
             position: absolute;
             background: rgba(15, 23, 42, 0.95);
@@ -445,7 +368,6 @@
             max-width: 600px;
             max-height: 80vh;
         }
-
         .overlay-header {
             display: flex;
             justify-content: space-between;
@@ -456,17 +378,14 @@
             padding-bottom: 10px;
             border-bottom: 1px solid #334155;
         }
-
         .overlay-title {
             font-size: 16px;
             font-weight: 600;
         }
-
         .overlay-controls {
             display: flex;
             gap: 8px;
         }
-
         .overlay-btn {
             background: rgba(51, 65, 85, 0.6);
             border: none;
@@ -477,35 +396,49 @@
             font-size: 12px;
             transition: all 0.2s ease;
         }
-
         .overlay-btn:hover {
             background: rgba(71, 85, 105, 0.8);
             color: #e2e8f0;
         }
-
         .overlay-content {
             font-size: 14px;
             color: #94a3b8;
             line-height: 1.8;
         }
-
         .overlay.minimized {
-            height: 50px !important;
-            resize: none;
-            overflow: hidden;
+            height: 55px !important;
+            min-height: 50px !important;
+            max-height: 55px !important;
+            resize: none !important;
+            overflow: hidden !important;
         }
 
         .overlay.minimized .overlay-content {
-            display: none;
+            display: none !important;
         }
 
+        .overlay.minimized .overlay-header {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+            border-bottom: none !important;
+        }
+        body:has(#instructions:not([style*="display: none"])) #app {
+            filter: blur(8px);
+        }
         #instructions {
-            top: 20px;
-            left: 20px;
-            width: 400px;
-            height: 250px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            color: #e2e8f0;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            padding: 16px;
+            z-index: 999; 
         }
-
         #warnings {
             top: 20px;
             right: 20px;
@@ -513,7 +446,6 @@
             height: auto;
             max-height: 400px;
         }
-
         .warning-item {
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%);
             border: 1px solid #f59e0b;
@@ -524,7 +456,6 @@
             gap: 12px;
             animation: slideIn 0.4s ease;
         }
-
         @keyframes slideIn {
             from {
                 opacity: 0;
@@ -535,19 +466,16 @@
                 transform: translateX(0);
             }
         }
-
         .warning-icon {
             color: #fbbf24;
             flex-shrink: 0;
         }
-
         #active-layers {
             bottom: 20px;
             left: 20px;
             width: 300px;
             height: auto;
         }
-
         .layer-badge {
             display: inline-block;
             padding: 6px 12px;
@@ -557,15 +485,14 @@
             margin-right: 8px;
             margin-bottom: 8px;
         }
-
-        /* Controls */
         #controls {
+            position: fixed;
             bottom: 20px;
             right: 20px;
             display: flex;
             gap: 12px;
+            z-index: 100;
         }
-
         .control-btn {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
             border: none;
@@ -577,13 +504,10 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
-
         .control-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
-
-        /* Loading */
         #loading {
             position: fixed;
             top: 0;
@@ -598,12 +522,10 @@
             z-index: 1000;
             transition: opacity 0.5s ease;
         }
-
         #loading.hidden {
             opacity: 0;
             pointer-events: none;
         }
-
         .loader {
             width: 60px;
             height: 60px;
@@ -612,18 +534,14 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
-
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
         .loading-text {
             margin-top: 20px;
             color: #94a3b8;
             font-size: 14px;
         }
-
-        /* Drag Ghost */
         .drag-ghost {
             position: fixed;
             pointer-events: none;
@@ -632,14 +550,11 @@
             opacity: 0.8;
             transform: translate(-50%, -50%);
         }
-
-        /* Responsive */
         @media (max-width: 1024px) {
             #sidebar {
                 width: 320px;
             }
         }
-
         @media (max-width: 768px) {
             #app {
                 flex-direction: column;
@@ -652,27 +567,33 @@
                 height: 60vh;
             }
         }
-
         @keyframes pulse {
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.5); opacity: 0.5; }
         }
-
         .building-preview {
             pointer-events: none;
             z-index: 1000;
         }
-        
+        .maplibregl-canvas,
+        .maplibregl-control-container {
+        z-index: 0 !important;
+        }
+        #overlay-bg {
+        position: fixed;
+        z-index: 9998 !important;
+        }
+        #instructions {
+        z-index: 20 !important;
+        }
     </style>
 </head>
 <body>
     <div id="loading">
         <div class="loader"></div>
-        <div class="loading-text">Loading Tokyo Urban Planner...</div>
+        <div class="loading-text">Loading NASA Urban Planner</div>
     </div>
-
     <div id="app">
-<!-- LEFT SIDEBAR (no Building Catalog) -->
 <div id="sidebar">
   <div class="sidebar-content">
     <div class="header">
@@ -681,11 +602,11 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
         </svg>
-        Tokyo Urban Planner 3D
+        NASA Urban Planner
       </h1>
-      <p>Design sustainable urban environments with real NASA data</p>
+      <p>Real-time strategy game! Get the highest sustainability score by placing buildings.</p>
+      <p>Buildings have bonuses based on the environments, so turn on the filters!</p>
     </div>
-
     <div class="card">
       <div class="card-title">
         <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -694,15 +615,22 @@
         </svg>
         Sustainability Dashboard
       </div>
-      
-      <div class="score-display">
-        <div class="score-value" id="score">72</div>
-        <div class="score-label">Sustainability Score</div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="score-bar" style="width: 72%"></div>
-        </div>
-      </div>
-
+<div class="score-display">
+  <div class="score-value" id="score">72</div>
+  <div class="score-label">Sustainability Score</div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="score-bar" style="width: 72%"></div>
+  </div>
+    <div class="turn-counter" style="
+        margin-top: 6px;
+        font-size: 13px;
+        text-align: center;
+        color: #94a3b8;
+        letter-spacing: 0.3px;
+    ">
+    Date: <span id="turn-counter">Oct 5, 2025</span>
+    </div>
+</div>
       <div class="metrics-grid">
         <div class="metric-box">
           <div class="metric-label">
@@ -710,11 +638,10 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
             </svg>
-            Net water (m³)
+            Net water (km³)
           </div>
           <div class="metric-value" id="water">0</div>
         </div>
-
         <div class="metric-box">
           <div class="metric-label">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
@@ -725,7 +652,6 @@
           </div>
           <div class="metric-value" id="money">0</div>
         </div>
-
         <div class="metric-box">
           <div class="metric-label">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
@@ -736,18 +662,16 @@
           </div>
           <div class="metric-value" id="happiness">0</div>
         </div>
-
         <div class="metric-box">
           <div class="metric-label">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
             </svg>
-            Net Energy (kW)
+            Net Energy (MW)
           </div>
           <div class="metric-value" id="energy">0</div>
         </div>
-
         <div class="metric-box">
           <div class="metric-label">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
@@ -758,20 +682,18 @@
           </div>
           <div class="metric-value" id="aqi">0</div>
         </div>
-
         <div class="metric-box">
           <div class="metric-label">
             <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:14px;height:14px">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
-            Population
+            Workers
           </div>
           <div class="metric-value" id="population">0</div>
         </div>
       </div>
     </div>
-
     <div class="card">
       <div class="card-title">
         <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -786,7 +708,6 @@
     </div>
   </div>
 </div>
-
         <div id="map-container">
             <div id="top-catalog" class="collapsed">
                 <div id="catalog-header">
@@ -802,28 +723,6 @@
                 </div>
             </div>
             <div id="map"></div>
-            
-            <div class="overlay" id="instructions" style="bottom: 5px; left: auto; top: auto; right: 5px; width: 400px; height: auto; resize: none;">
-                <div class="overlay-header" style="cursor: default;">
-                    <div class="overlay-title">Quick Start Guide</div>
-                    <div class="overlay-controls">
-                        <button class="overlay-btn" onclick="document.getElementById('instructions').style.display='none'">✕</button>
-                    </div>
-                </div>
-                <div class="overlay-content">
-                    <ul style="list-style: none;">
-                        <li>• Drag buildings from sidebar onto the map</li>
-                        <li>• Or click building then click map to place</li>
-                        <li>• Toggle NASA data layers for insights</li>
-                        <li>• Monitor sustainability score in real-time</li>
-                        <li>• Green buildings reduce carbon emissions</li>
-                        <li>• Balance residential, commercial & services</li>
-                        <li>• Watch AI warnings for planning issues</li>
-                        <li>• Resize and move the warning panels as needed</li>
-                    </ul>
-                </div>
-            </div>
-
             <div class="overlay" id="warnings" style="display: none; right:5px; top:5px;">
                 <div class="overlay-header" id="warnings-header">
                     <div class="overlay-title" style="color: #fbbf24;">⚠️ AI Planning Alerts</div>
@@ -835,64 +734,540 @@
                     <div id="warning-list"></div>
                 </div>
             </div>
-
-            <div class="overlay" id="active-layers" style="display: none;">
+            <div class="overlay" id="active-layers" style="bottom: 20px; left: 20px; width: 300px; height: auto;">
                 <div class="overlay-header" id="active-layers-header">
                     <div class="overlay-title">Active Layers</div>
                     <div class="overlay-controls">
                         <button class="overlay-btn" onclick="toggleMinimize('active-layers')">−</button>
                     </div>
                 </div>
-                <div class="overlay-content">
-                    <div id="active-layer-list"></div>
-                </div>
+                <div class="overlay-content" id="active-layer-list"></div>
             </div>
-
             <div id="controls">
                 <button class="control-btn" onclick="resetSimulation()">Reset Simulation</button>
                 <button class="control-btn" onclick="generateReport()">Generate Report</button>
             </div>
         </div>
     </div>
-
+    <div id="overlay-bg" style="display: none;"></div>
+        <div class="overlay" id="instructions" style="
+        width: 420px;
+        height: auto;
+        resize: none;
+        display: none;
+        border-radius: 12px;
+        overflow: hidden;
+        ">
+        <div class="overlay-header" style="cursor: default;">
+            <div class="overlay-title" style="color: #10b981;">Quick Start Guide</div>
+            <div class="overlay-controls">
+            <button class="overlay-btn" onclick="hideInstructions()">✕</button>
+            </div>
+        </div>
+        <div class="overlay-content" style="padding-bottom: 10px;">
+            <ul style="list-style: none; padding-left: 0;">
+            <li>• Try to get <b>100 Sustainability</b> & <b>100,000 population</b> in the <b>least</b> number of turns</li>
+            <li>• Drag buildings from the sidebar onto the map</li>
+            <li>• Or click a building, then click the map to place it</li>
+            <li>• Toggle <b>NASA data layers</b> for insights</li>
+            <li>• Monitor sustainability score in real time</li>
+            <li>• Green buildings reduce carbon emissions 🌿</li>
+            <li>• Balance residential, commercial & civic zones</li>
+            <li>• Watch for <b>AI planning warnings</b> 🧠</li>
+            <li>• Resize & move panels as needed</li>
+            </ul>
+            <div id="start-panel" style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            width: 100%;
+            margin-top: 12px;
+            ">
+            <label for="difficultySelect" style="font-size: 14px; color: #94a3b8;">
+                Select Difficulty
+            </label>
+            <select id="difficultySelect" onchange="setDifficulty(this.value)" style="
+                width: 100%;
+                padding: 8px 10px;
+                background: #0f172a;
+                color: #e2e8f0;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                outline: none;
+            "
+            onfocus="this.style.borderColor='#10b981'"
+            onblur="this.style.borderColor='#334155'">
+                <option value="easy">🌱 Easy</option>
+                <option value="medium">🌿 Medium</option>
+                <option value="hard">🔥 Hard</option>
+            </select>
+            <button id="startGameBtn" onclick="hideInstructions()" style="
+                width: 100%;
+                padding: 10px 12px;
+                background: #10b981;
+                color: white;
+                font-weight: 600;
+                border: none;
+                border-radius: 8px;
+                font-size: 15px;
+                letter-spacing: 0.4px;
+                cursor: pointer;
+                transition: all 0.25s ease;
+            "
+            onmouseover="this.style.background='#22c55e'"
+            onmouseout="this.style.background='#10b981'">
+                ▶️ Start Game
+            </button>
+            </div>
+        </div>
+        </div>
+    </div>
+    <div class="overlay" id="victory" style="width: 400px; height: auto; resize: none; display: none;">
+    <div class="overlay-header" style="cursor: default;">
+        <div class="overlay-title" style="color: #10b981;">🏆 Victory Achieved!</div>
+        <div class="overlay-controls">
+        <button class="overlay-btn" onclick="hideVictory()">✕</button>
+        </div>
+    </div>
+    <div class="overlay-content">
+        <ul style="list-style: none;">
+        <li>• Congratulations! You've reached sustainability perfection 🌍</li>
+        <li>• Score: <span id="victoryScore">100</span></li>
+        <li>• Population: <span id="victoryPop">200,000</span></li>
+        <li>• Money: <span id="victoryMoney">$2,000M</span></li>
+        <li>• Mode: <span id="victoryMode">Easy</span></li>
+        <br>
+        <li>🎉 Thank you for playing NASA Urban Planner!</li>
+        <li>🌆 Keep expanding your sustainable city!</li>
+        </ul>
+        <div style="text-align:center;margin-top:12px;">
+        <button class="control-btn" onclick="resetSimulation()">Play Again</button>
+        </div>
+    </div>
+    </div>
     <script>
-
+        let currentDate = new Date(2025, 9, 5); 
         const TOKYO_CENTER = [139.76685988006122, 35.681665376337875];
-        
         const layers = [
             { id: 'airQuality', name: 'Air Quality (MODIS AOD)', color: '#f59e0b' },
             { id: 'temperature', name: 'Surface Temperature (Landsat 8)', color: '#ef4444' },
             { id: 'vegetation', name: 'Vegetation Health (NDVI)', color: '#10b981' },
             { id: 'precipitation', name: 'Precipitation (GPM)', color: '#3b82f6' }
         ];
-    // Center on Tokyo Station
     const TOKYO_STATION = [139.767125, 35.681236];
-
-    // 10 km x 10 km (±5 km) box around Tokyo Station
-    // 1° lat ≈ 111.32 km; lon scaled by cos(latitude)
-    const LAT_DELTA = 1200 / 111.32; // ≈ 0.0449156
-    const LON_DELTA = 1200 / (111.32 * Math.cos(35.681236 * Math.PI / 180)); // ≈ 0.0552960
-
+    const LAT_DELTA = 1200 / 111.32; 
+    const LON_DELTA = 1200 / (111.32 * Math.cos(35.681236 * Math.PI / 180)); 
     const BOUNDS_SW = [TOKYO_STATION[0] - LON_DELTA, TOKYO_STATION[1] - LAT_DELTA];
     const BOUNDS_NE = [TOKYO_STATION[0] + LON_DELTA, TOKYO_STATION[1] + LAT_DELTA];
     const TOKYO_STATION_BOUNDS = [BOUNDS_SW, BOUNDS_NE];
-    
-
         let map;
         let state = {
-            score: 72,
-            carbon: 118000,
-            green: 22,
-            air: 42,
-            population: 342000,
+            money: 2000,
+            energy: 0,
+            water: 0,
+            population: 100000,           // Total population
+            availableWorkers: 90000,      // Unemployed workers
+            employedWorkers: 0,       // Currently working
+            housingCapacity: 0,
+            happiness: 50,
+            moneyRate: 0,
+            energyRate: 0,
+            waterRate: 0,
+            populationRate: 0,
+            airRate: 0,
+            score: 0,
+            green: 0,
+            air: 0,
             activeLayers: {},
             placedBuildings: [],
-            warnings: []
+            warnings: [],
+            gameStarted: false,
+            tickInterval: null,
+            lastBlackoutWarning: 0,
+            lastWorkerWarning: 0,
+            difficulty: 'easy'
         };
+        const audioManager = {
+            sounds: {},
+            musicVolume: 0.07,
+            sfxVolume: 0.4,
+            musicEnabled: true,
+            sfxEnabled: true,
+            init() {
+                const soundFiles = ['background', 'build', 'coin'];
+                soundFiles.forEach(name => {
+                    const audio = new Audio(`/static/sounds/${name}.mp3`);
+                    audio.preload = 'auto';
+                    audio.volume = name === 'background' ? this.musicVolume : this.sfxVolume;
+                    if (name === 'background') {
+                        audio.loop = true;
+                    }
+                    this.sounds[name] = audio;
+                });
+                console.log('Audio preloaded');
+            },
+            playMusic() {
+                if (!this.musicEnabled || !this.sounds.background) return;
+                this.sounds.background.play().catch(e => {
+                    console.log('Click to enable music');
+                });
+            },
+            stopMusic() {
+                if (this.sounds.background) {
+                    this.sounds.background.pause();
+                    this.sounds.background.currentTime = 0;
+                }
+            },
+            playSFX(soundName) {
+                if (!this.sfxEnabled || !this.sounds[soundName]) {
+                    console.log(`Sound ${soundName} not loaded`);
+                    return;
+                }
+                const sound = this.sounds[soundName];
+                sound.currentTime = 0;
+                if (soundName == 'coin'){
+                    sfxVolume = 0.2
+                }
+                sound.play().catch(e => {
+                    console.log(`Cannot play ${soundName}: ${e.message}`);
+                });
+                if (soundName == 'coin'){
+                    sfxVolume = 0.4
+                }
+            },
+            toggleMusic() {
+                this.musicEnabled = !this.musicEnabled;
+                if (this.musicEnabled) {
+                    this.playMusic();
+                } else {
+                    this.stopMusic();
+                }
+                return this.musicEnabled;
+            },
+            toggleSFX() {
+                this.sfxEnabled = !this.sfxEnabled;
+                return this.sfxEnabled;
+            }
+        };
+        audioManager.init();
+document.addEventListener('click', () => audioManager.playMusic(), { once: true });
+document.addEventListener('click', function enableAudio() {
+    audioManager.playMusic();
+}, { once: true });
+        function startGameLoop() {
+            if (state.tickInterval) return;
+            state.gameStarted = true;
+            state.tickInterval = setInterval(gameTick, 1000);
+        }
+        function gameTick() {
+            calculateRates();
+            applyRates();
+            checkGameOver();
+            updateAllMetrics();
+            currentDate.setDate(currentDate.getDate() + 1);
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            document.getElementById('turn-counter').textContent = currentDate.toLocaleDateString('en-US', options);
+        }
+        function calculateRates() {
+            state.moneyRate = 0;
+            state.energyRate = 0;
+            state.waterRate = 0;
+            state.airRate = 0;
+            state.populationRate = 0;
+            let housingCap = 0;
+            let jobsProvided = 0;
+            let workersNeeded = 0; 
+            const energyBreakdown = [];
+            const moneyBreakdown = [];
+            const waterBreakdown = [];
+            const co2Breakdown = [];
+            const happinessBreakdown = [];
+            let hasSchool = false;
+            let hasHospital = false;
+            let parkCount = 0;
+            let nearbyParksBonus = 0;
+            const factories = [];
+            state.placedBuildings.forEach(placed => {
+                const b = buildings.find(def => def.id === placed.type);
+                if (!b) return;
+                const energyPerSec = (b.energy || 0);
+                state.energyRate += energyPerSec;
+                if (Math.abs(energyPerSec) > 0.01) {
+                    energyBreakdown.push({
+                        name: b.name,
+                        value: energyPerSec,
+                        type: energyPerSec < 0 ? 'production' : 'consumption'
+                    });
+                }
+                const airPerSec = (b.air || 0);
+                state.airRate += airPerSec;
+                if (Math.abs(airPerSec) > 0.01) {
+                co2Breakdown.push({
+                    name: b.name,
+                    value: airPerSec,
+                    type: airPerSec < 0 ? 'added (pollution)' : 'removed (clean)'
+                });
+                }
+                const waterPerSec = (b.water || 0);
+                state.waterRate += waterPerSec;
+                if (Math.abs(waterPerSec) > 0.01) {
+                    waterBreakdown.push({
+                        name: b.name,
+                        value: waterPerSec,
+                        type: waterPerSec < 0 ? 'source' : 'consumption'
+                    });
+                }
+                const moneyPerSec = (b.money || 0);
+                state.moneyRate += moneyPerSec;
+                if (Math.abs(moneyPerSec) > 0.01) {
+                moneyBreakdown.push({
+                    name: b.name,
+                    value: moneyPerSec,
+                    type: moneyPerSec < 0 ? 'cost' : 'revenue'
+                });
+                }
+                if (b.id.includes('industrial') || b.id.includes('commercial')) {
+                    const workersForThis = Math.abs(b.pop || 0);
+                    workersNeeded += workersForThis;
+                    factories.push({ name: b.name, workers: workersForThis, building: placed });
+                }
+                if (b.id === 'service-school') hasSchool = true;
+                if (b.id === 'service-hospital') hasHospital = true;
+                if (b.id === 'green-park') parkCount++;
+            });
+            state.housingCapacity = housingCap;
+            // Worker calculations
+            const workerShortage = state.employedWorkers > state.population ? state.employedWorkers - state.population : 0;
 
+            if (workerShortage > 0) {
+                const now = Date.now();
+                const timeSinceLastWarning = now - state.lastWorkerWarning;
+                
+                if (timeSinceLastWarning >= 7000) {
+                    addWarning(`⚠️ Worker shortage! Need ${Math.floor(workerShortage)} more workers. Build residential buildings!`, 7000, 'red');
+                    state.lastWorkerWarning = now;
+                }
+            } else {
+                state.lastWorkerWarning = 0;
+            }
+            const hasEnergy = state.energy > 0;
+            if (!hasEnergy) {
+                const now = Date.now();
+                const timeSinceLastWarning = now - state.lastBlackoutWarning;
+                if (timeSinceLastWarning >= 7000) { 
+                    addWarning(`🔌 BLACKOUT! Negative energy (${Math.floor(state.energy)}MW). Buildings offline. Build power plants!`, 7000, 'red');
+                    state.lastBlackoutWarning = now;
+                }
+                state.populationRate = 0;
+                state.moneyRate = 0;
+            } else {
+                state.lastBlackoutWarning = 0;
+            }
+            let happiness = 50; 
+            happinessBreakdown.push({ name: 'Base', value: 50 });
+            const parkBonus = Math.min(30, parkCount * 3);        
+            happiness += parkBonus;
+            if (parkBonus > 0) happinessBreakdown.push({ name: `Parks (${parkCount})`, value: parkBonus });
+            const proximityBonus = Math.min(20, nearbyParksBonus * 1.0); 
+            happiness += proximityBonus;
+            if (proximityBonus > 0) happinessBreakdown.push({ name: 'Parks near homes', value: proximityBonus });
+            if (hasSchool) {
+            happiness += 1.5;                                     
+            happinessBreakdown.push({ name: 'School', value: 15 });
+            } else if (state.population > 50000) {
+            happiness -= 5;
+            happinessBreakdown.push({ name: 'No school', value: -5 });
+            }
+            if (hasHospital) {
+            happiness += 1.2;                                     
+            happinessBreakdown.push({ name: 'Hospital', value: 12 });
+            } else if (state.population > 50000) {
+            happiness -= 0.5;
+            happinessBreakdown.push({ name: 'No hospital', value: -5 });
+            }
+            if (state.population > state.housingCapacity) {
+            const raw = -((state.population - state.housingCapacity) / 5000); 
+            const penalty = Math.max(raw, -1.5); 
+            happiness += penalty;
+            happinessBreakdown.push({ name: 'Overcrowding', value: penalty });
+            }
+            if (state.airRate < 0) {
+            const penalty = Math.max(state.airRate / 200, -8);   
+            happiness += penalty;
+            happinessBreakdown.push({ name: 'Pollution', value: penalty });
+            }
+            const coalPlants = state.placedBuildings.filter(p => p.type === 'energy-coal-plant').length;
+            if (coalPlants > 0) {
+            const coalPenalty = -(coalPlants * 8);
+            happiness += coalPenalty;
+            happinessBreakdown.push({ name: `Coal plants (${coalPlants})`, value: coalPenalty });
+            }
+            if (state.energy < 0) {
+            const penalty = Math.max(state.energy / 2000, -6);   
+            happiness += penalty;
+            happinessBreakdown.push({ name: 'Power outages', value: penalty });
+            }
+            if (workerShortage < -1000) {
+            const unemployed = Math.abs(workerShortage);
+            const penalty = -Math.min(15, unemployed / 5000);
+            happiness += penalty;
+            happinessBreakdown.push({ name: 'Unemployment', value: penalty });
+            }
+            state.happiness = Math.max(0, Math.min(100, happiness));
+            if (hasEnergy) {
+                const employedWorkers = Math.min(availableWorkers, workersNeeded);
+                const taxIncome = (employedWorkers / 1000) * 0.5;
+                if (taxIncome > 0) {
+                    state.moneyRate += taxIncome;
+                    moneyBreakdown.push({ name: `Worker taxes (${Math.floor(employedWorkers / 1000)}k workers)`, value: taxIncome });
+                }
+                const happinessMult = 0.5 + (state.happiness / 100);
+                const happinessBonus = taxIncome * (happinessMult - 1);
+                if (Math.abs(happinessBonus) > 0.01) {
+                    state.moneyRate += happinessBonus;
+                    moneyBreakdown.push({ name: `Happiness bonus (${Math.floor(state.happiness)}%)`, value: happinessBonus });
+                }
+                const commercialCount = state.placedBuildings.filter(p => {
+                    const b = buildings.find(def => def.id === p.type);
+                    return b && b.id.includes('commercial');
+                }).length;
+                const commercialIncome = commercialCount * 0.8;
+                if (commercialIncome > 0) {
+                    state.moneyRate += commercialIncome;
+                    moneyBreakdown.push({ name: `Commercial (${commercialCount})`, value: commercialIncome });
+                }
+                const farmCount = state.placedBuildings.filter(p => p.type === 'agri-farm').length;
+                const farmIncome = farmCount * 0.5;
+                if (farmIncome > 0) {
+                    state.moneyRate += farmIncome;
+                    moneyBreakdown.push({ name: `Farms (${farmCount})`, value: farmIncome });
+                }
+            } else {
+                const maintenanceCost = state.placedBuildings.length * 0.1;
+                state.moneyRate -= maintenanceCost;
+                moneyBreakdown.push({ name: '🔌 No power - maintenance costs only', value: -maintenanceCost });
+            }
+            if (state.energy < 0) {
+                const emergencyCost = Math.abs(state.energy) / 5000;
+                state.moneyRate -= emergencyCost;
+                moneyBreakdown.push({ name: '⚠️ Emergency power costs', value: -emergencyCost });
+            }
+            state.breakdowns = {
+                energy: energyBreakdown,
+                money: moneyBreakdown,
+                water: waterBreakdown,
+                co2: co2Breakdown,
+                happiness: happinessBreakdown
+            };
+        }
+        function applyRates() {
+            const oldMoney = state.money;
+            state.money += state.moneyRate;
+            state.energy = state.energyRate;
+            state.water  = state.waterRate;
+            state.air   += state.airRate;
+            state.population += state.populationRate;
+            state.money = Math.max(0, state.money);
+            state.population = Math.max(50000, state.population);
+            if (state.moneyRate > 0 && state.money > oldMoney + 10 && Math.random() < 0.1) {
+                audioManager.playSFX('coin');
+            }
+        let score = 0;
+        if (state.airRate >= 0) {
+            // clean or improving air → reward up to 25 points
+            score += Math.min(25, 25 + (state.airRate / 50));
+        } else {
+            // negative = pollution → penalty
+            score += Math.max(0, 25 + (state.airRate / 200));
+        }
+
+        if (state.energy <= 0) score -= 10;
+        const renewable = state.placedBuildings.filter(p => {
+            const b = buildings.find(def => def.id === p.type);
+            return b && (b.id.includes('solar') || b.id.includes('wind') || b.id.includes('hydro'));
+        }).length;
+        const fossil = state.placedBuildings.filter(p => p.type === 'energy-coal-plant').length;
+        const ratio = (renewable + fossil) > 0 ? renewable / (renewable + fossil) : 0;
+        score += ratio * 25;
+        const parks = state.placedBuildings.filter(p => p.type === 'green-park').length;
+        score += Math.min(20, parks * 1.5);
+        score += (state.happiness / 100) * 20;
+        const waterSupply  = state._waterSupply  || 0;
+        const waterDemand  = state._waterDemand  || 0;
+        const waterDeficit = Math.max(0, waterDemand - waterSupply);
+        score += Math.max(0, 10 - (waterDeficit / 200));
+        const basePop   = 50000; 
+        const popFactor = Math.max(0, (state.population - basePop) / 50000); 
+        score += Math.min(20, popFactor * 20);
+        const difficulty = state.difficulty || 'easy';
+        const multiplier =
+            difficulty === 'medium' ? 1.5 :
+            difficulty === 'hard'   ? 2   : 1;
+        state.score = Math.round(
+  Math.min(100, Math.max(0, score * multiplier))
+);
+        }
+        function checkGameOver() {
+        if (state.score >= 100 && state.population >= 100000) {
+            clearInterval(state.tickInterval);
+            showVictory();
+            return;
+        }
+            if (state.money <= 0 && state.moneyRate <= 0) {
+                clearInterval(state.tickInterval);
+                alert('BANKRUPT!');
+                return;
+            }
+        }
+        function showVictory() {
+        document.getElementById('overlay-bg').style.display = 'block';
+        const v = document.getElementById('victory');
+        v.style.display = 'block';
+        document.getElementById('victoryScore').textContent = Math.floor(state.score);
+        document.getElementById('victoryPop').textContent = Math.floor(state.population).toLocaleString();
+        document.getElementById('victoryMoney').textContent = `$${Math.floor(state.money)}M`;
+        document.getElementById('victoryMode').textContent = state.difficulty || 'Easy';
+        }
+        function hideVictory() {
+        document.getElementById('overlay-bg').style.display = 'none';
+        document.getElementById('victory').style.display = 'none';
+        }
+        function updateAllMetrics() {
+            const fmt = (rate, suffix = '') => {
+                if (!state.gameStarted || Math.abs(rate) < 0.01) return '';
+                const sign = rate >= 0 ? '+' : '';
+                const color = rate >= 0 ? '#10b981' : '#ef4444';
+                return ` <span style="color:${color};font-size:10px">${sign}${rate.toFixed(2)}${suffix}/s</span>`;
+            };
+            document.getElementById('money').innerHTML = `$${Math.floor(state.money)}M${fmt(state.moneyRate, 'M')}`;
+            document.getElementById('water').innerHTML = `${Math.floor(state.water / 1000).toLocaleString()}k${fmt(state.waterRate / 1000, 'k')}`;
+            document.getElementById('energy').innerHTML = `${Math.floor(state.energy).toLocaleString()}MW${fmt(state.energyRate, 'MW')}`;
+            document.getElementById('happiness').innerHTML = `${Math.floor(state.happiness)}`;
+            document.getElementById('aqi').innerHTML = `${state.air}`;
+            const employedText = state.employedWorkers > 0 ? ` (${Math.floor(state.employedWorkers).toLocaleString()} employed)` : '';
+            document.getElementById('population').innerHTML = `${Math.floor(state.population-state.employedWorkers).toLocaleString()}`;            
+            document.getElementById('score').textContent = state.score;
+            document.getElementById('score-bar').style.width = `${state.score}%`;
+            const scoreEl = document.getElementById('score');
+            scoreEl.style.background = state.score > 70 ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 
+                                        state.score > 40 ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' :
+                                        'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+            scoreEl.style.webkitBackgroundClip = 'text';
+            scoreEl.style.webkitTextFillColor = 'transparent';
+        }
         let dragGhost = null;
         let currentDraggedBuilding = null;
-
         function initMap() {
             map = new maplibregl.Map({
                 container: 'map',
@@ -900,63 +1275,108 @@
                 center: TOKYO_CENTER,
                 zoom: 7,
                 maxZoom: 12,
+                minZoom: 5,
                 pitch: 20,
                 bearing: -17.6,
                 antialias: true,
                 maxBounds: TOKYO_STATION_BOUNDS,
             });
+        // --- Add invisible grid layer ---
+function addGrid(gridSize = 0.1) { // gridSize in degrees
+    const bounds = map.getBounds();
+    const features = [];
 
+    // Create vertical and horizontal lines
+    for (let lon = -180; lon <= 180; lon += gridSize) {
+        features.push({
+            type: 'Feature',
+            geometry: {
+                type: 'LineString',
+                coordinates: [
+                    [lon, -90],
+                    [lon, 90]
+                ]
+            }
+        });
+    }
+    for (let lat = -90; lat <= 90; lat += gridSize) {
+        features.push({
+            type: 'Feature',
+            geometry: {
+                type: 'LineString',
+                coordinates: [
+                    [-180, lat],
+                    [180, lat]
+                ]
+            }
+        });
+    }
+
+    const geojson = { type: 'FeatureCollection', features };
+
+    if (!map.getSource('grid-source')) {
+        map.addSource('grid-source', { type: 'geojson', data: geojson });
+    }
+
+    if (!map.getLayer('grid-layer')) {
+        map.addLayer({
+            id: 'grid-layer',
+            type: 'line',
+            source: 'grid-source',
+            paint: {
+                'line-color': 'rgba(0,0,0,0)', // invisible
+                'line-width': 1
+            }
+        });
+    }
+
+    // --- Show coordinates on click ---
+    map.on('click', 'grid-layer', (e) => {
+        const coords = e.lngLat;
+        console.log(`📍 Clicked at: ${coords.lng.toFixed(6)}, ${coords.lat.toFixed(6)}`);
+        alert(`Coordinates: ${coords.lng.toFixed(6)}, ${coords.lat.toFixed(6)}`);
+    });
+}
             map.addControl(new maplibregl.NavigationControl(), 'top-left');
             map.addControl(new maplibregl.ScaleControl(), 'bottom-left');
-
             map.on('load', () => {
                 add3DBuildings();
                 addDataLayers();
-
-
-                // Create custom marker element for Tokyo flag
+                renderLayerToggles();
+                addGrid(0.05);
                 const markerEl = document.createElement('div');
                 markerEl.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
                 markerEl.style.padding = '4px 8px';
                 markerEl.style.borderRadius = '4px';
-                markerEl.style.border = '1px solid #dc2626';  // Red border for Japanese flag vibe
+                markerEl.style.border = '1px solid #dc2626';  
                 markerEl.style.fontSize = '16px';
                 markerEl.style.fontWeight = 'bold';
                 markerEl.style.color = '#dc2626';
                 markerEl.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
                 markerEl.style.cursor = 'pointer';
-                markerEl.innerHTML = '🇯🇵 Tokyo';  // Flag emoji + text; customize as needed
-
-                // Add the marker at Tokyo center
+                markerEl.innerHTML = '🇯🇵 Tokyo';  
                 new maplibregl.Marker({
                     element: markerEl,
-                    anchor: 'bottom'  // Anchor at bottom for pin-like effect
+                    anchor: 'bottom'  
                 })
                 .setLngLat(TOKYO_CENTER)
                 .addTo(map);
-                
                 setTimeout(() => {
-    document.getElementById('loading').classList.add('hidden');
-    fetchAIGreeting(); // 👈 This triggers the AI greeting
-}, 1000);
-
-                
+                    document.getElementById('loading').classList.add('hidden');
+                    fetchAIGreeting(); 
+                    showInstructions();
+                }, 1000);
             });
-
-            // Handle map click for placement
             map.on('click', (e) => {
                 if (state.selectedBuilding) {
                     placeBuilding(state.selectedBuilding, e.lngLat);
                 }
             });
-
-            // Handle drag drop on map
             const mapEl = map.getContainer();
             mapEl.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'copy';
             });
-
             mapEl.addEventListener('drop', (e) => {
                 e.preventDefault();
                 if (currentDraggedBuilding) {
@@ -964,7 +1384,6 @@
                     const point = {
                         x: e.clientX - rect.left,
                         y: e.clientY - rect.top
-                        
                     };
                     const lngLat = map.unproject(point);
                     placeBuilding(currentDraggedBuilding, lngLat);
@@ -975,14 +1394,18 @@
                     dragGhost = null;
                 }
             });
+            document.addEventListener('click', function enableAudio() {
+                audioManager.playMusic();
+                document.removeEventListener('click', enableAudio);
+            }, { once: true });
         }
+
 
         function add3DBuildings() {
             map.addSource('openmaptiles', {
                 type: 'vector',
                 url: 'https://api.maptiler.com/tiles/v3/tiles.json?key=viJuvZkevz46XH8SE919'
             });
-
             map.addLayer({
                 'id': '3d-buildings',
                 'source': 'openmaptiles',
@@ -996,64 +1419,262 @@
                 }
             });
         }
-
-        function addDataLayers() {
-    // Skip raster layers — we’ll use GeoJSON points for air quality
-    fetch('/static/aod.json')
-        .then(response => response.json())
-        .then(data => {
-            // Convert to GeoJSON
-            const geojson = {
-                type: 'FeatureCollection',
-                features: data.data.map(pt => ({
-                    type: 'Feature',
-                    geometry: {
-                        type: 'Point',
-                        coordinates: [pt.lon, pt.lat]  // [lon, lat]!
-                    },
-                    properties: {
-                        aod: pt.aod
-                    }
-                }))
-            };
-
-            // Add source
-            map.addSource('aod-source', {
-                type: 'geojson',
-                data: geojson
-            });
-
-            // Add circle layer with color based on AOD
-            map.addLayer({
-                id: 'airQuality',
-                type: 'circle',
-                source: 'aod-source',
-                paint: {
-                    'circle-radius': 6,
-                    'circle-color': [
-                        'interpolate',
-                        ['linear'],
-                        ['get', 'aod'],
-                        0.0,   '#10b981',   // green (clean)
-                        0.15,  '#fbbf24',   // yellow
-                        0.30,  '#f59e0b',   // orange
-                        0.50,  '#ef4444'    // red (hazy)
-                    ],
-                    'circle-opacity': 0.7
+let currentLegendId = null;
+let hideTimeout = null;
+function showLegend(id) {
+    if (hideTimeout) clearTimeout(hideTimeout);
+    if (currentLegendId === id) return;
+    currentLegendId = id;
+    const container = document.getElementById('legend-container');
+    container.style.pointerEvents = 'auto';
+    let html = '';
+    switch(id) {
+        case 'airQuality':
+            html = `
+                <div style="text-color: black; background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                    <h4 style="margin:0 0 10px 0; font-size:16px;">Aerosol Optical Depth (AOD)</h4>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#10b981; margin-right: 8px;"></div>
+                        <span>0.04 – Clean</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#3b82f6; margin-right: 8px;"></div>
+                        <span>0.15 – Moderate</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#fbbf24; margin-right: 8px;"></div>
+                        <span>0.25 – Elevated</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#f59e0b; margin-right: 8px;"></div>
+                        <span>0.40 – High</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#ef4444; margin-right: 8px;"></div>
+                        <span>0.70 – Very High</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#991b1b; margin-right: 8px;"></div>
+                        <span>1.10 – Extreme</span>
+                    </div>
+                </div>
+            `;
+            break;
+        case 'temperature':
+            html = `
+                <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                    <h4 style="margin:0 0 10px 0; font-size:16px;">Temperature (AOD Proxy)</h4>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#bfdbfe; margin-right: 8px;"></div>
+                        <span>0.04 – Cool</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#60a5fa; margin-right: 8px;"></div>
+                        <span>0.20 – Mild</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#f59e0b; margin-right: 8px;"></div>
+                        <span>0.35 – Warm</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#dc2626; margin-right: 8px;"></div>
+                        <span>0.60 – Hot</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#7f1d1d; margin-right: 8px;"></div>
+                        <span>1.10 – Very Hot</span>
+                    </div>
+                </div>
+            `;
+            break;
+        case 'precipitation':
+            html = `
+                <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                    <h4 style="margin:0 0 10px 0; font-size:16px;">Precipitation (AOD Proxy)</h4>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#dbeafe; margin-right: 8px;"></div>
+                        <span>0.04 – Light</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#60a5fa; margin-right: 8px;"></div>
+                        <span>0.20 – Moderate</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#2563eb; margin-right: 8px;"></div>
+                        <span>0.40 – Heavy</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#1e3a8a; margin-right: 8px;"></div>
+                        <span>0.70 – Very Heavy</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#1e1b4b; margin-right: 8px;"></div>
+                        <span>1.10 – Extreme</span>
+                    </div>
+                </div>
+            `;
+            break;
+        case 'vegetation':
+            html = `
+                <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);">
+                    <h4 style="margin:0 0 10px 0; font-size:16px;">Vegetation Density</h4>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#e6f7e6; margin-right: 8px;"></div>
+                        <span>0% – Sparse</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#88c988; margin-right: 8px;"></div>
+                        <span>50% – Moderate</span>
+                    </div>
+                    <div style="display: flex; align-items: center; margin: 4px 0;">
+                        <div style="width: 20px; height: 20px; background:#1a5e1a; margin-right: 8px;"></div>
+                        <span>100% – Dense</span>
+                    </div>
+                </div>
+            `;
+            break;
+        default:
+            container.innerHTML = '';
+            currentLegendId = null;
+            return;
+    }
+    container.innerHTML = html;
+    hideTimeout = setTimeout(() => {
+        if (currentLegendId === id) {
+            container.innerHTML = '';
+            currentLegendId = null;
+            container.style.pointerEvents = 'none';
+        }
+    }, 30000); 
+    const legendEl = container.firstChild;
+    if (legendEl) {
+        legendEl.onmouseenter = () => { if (hideTimeout) clearTimeout(hideTimeout); };
+        legendEl.onmouseleave = () => {
+            hideTimeout = setTimeout(() => {
+                if (currentLegendId === id) {
+                    container.innerHTML = '';
+                    currentLegendId = null;
+                    container.style.pointerEvents = 'none';
                 }
-            });
-
-            // Hide it by default (will be toggled on)
-            map.setLayoutProperty('airQuality', 'visibility', 'none');
-        })
-        .catch(err => {
-            console.error('Failed to load AOD data:', err);
-            alert('⚠️ Air quality data failed to load. Check aod.json in /static.');
-        });
+            }, 5000); 
+        };
+    }
 }
-        // Global registry of placed buildings for quick lookup / export
+function hideLegend() {
+    const container = document.getElementById('legend-container');
+    container.innerHTML = '';
+    currentLegendId = null;
+    if (hideTimeout) clearTimeout(hideTimeout);
+    container.style.pointerEvents = 'none';
+}
+    function addDataLayers() {
+  fetch('/static/aod.json')
+    .then(r => r.json())
+    .then(data => {
+      const geojson = {
+        type: 'FeatureCollection',
+        features: data.data.map(pt => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [pt.lon, pt.lat] },
+          properties: { aod: pt.aod }
+        }))
+      };
+      if (!map.getSource('aod-source')) {
+        map.addSource('aod-source', { type: 'geojson', data: geojson });
+      }
+      function safeAddLayer(id, type, paint) {
+        if (map.getLayer(id)) map.removeLayer(id);
+        map.addLayer({
+          id,
+          type,
+          source: 'aod-source',
+          paint,
+          layout: { visibility: 'none' }
+        });
+        state.activeLayers[id] = false;
+      }
+      safeAddLayer('airQuality', 'circle', {
+        'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 0, 8, 5, 15, 7, 30, 9, 60, 11, 120],
+        'circle-color': [
+          'interpolate', ['linear'], ['-', 1, ['get', 'aod']],
+          0.04, '#991b1b',
+          0.15, '#ef4444',
+          0.25, '#f59e0b',
+          0.4, '#fbbf24',
+          0.7, '#3b82f6',
+          1.1, '#10b981'
+        ],
+        'circle-opacity': 0.3,
+        'circle-blur': 0.8
+      });
+      safeAddLayer('precipitation', 'circle', {
+        'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 0, 8, 5, 15, 7, 30, 9, 60, 11, 120],
+        'circle-color': [
+          'interpolate', ['linear'], ['get', 'aod'],
+          0.04, '#dbeafe',
+          0.2, '#60a5fa',
+          0.4, '#2563eb',
+          0.7, '#1e3a8a',
+          1.1, '#1e1b4b'
+        ],
+        'circle-opacity': 0.3,
+        'circle-blur': 0.8
+      });
+      console.log(`✅ Loaded ${data.data.length} AOD points (range: 0.04–1.1)`);
+      const aodPopup = new mapboxgl.Popup({ closeButton: false, closeOnClick: false });
+      map.on('mouseenter', 'airQuality', (e) => {
+        map.getCanvas().style.cursor = 'pointer';
+        const feature = e.features[0];
+        const coords = feature.geometry.coordinates.slice();
+        const aodValue = feature.properties.aod;
+        aodPopup
+          .setLngLat(coords)
+          .setHTML(`AOD: ${aodValue}<br>Lon: ${coords[0].toFixed(4)}, Lat: ${coords[1].toFixed(4)}`)
+          .addTo(map);
+      });
+      map.on('mouseleave', 'airQuality', () => {
+        map.getCanvas().style.cursor = '';
+        aodPopup.remove();
+      });
+    })
+    .catch(err => console.error('❌ Failed to load aod.json:', err));
+  fetch('/static/veg_with_density.json')
+    .then(r => r.json())
+    .then(geojson => {
+      if (!map.getSource('veg-source')) {
+        map.addSource('veg-source', { type: 'geojson', data: geojson });
+      }
+      function safeAddFillLayer(id, source, colorInterp, outline = 'rgba(0,0,0,0.3)', opacity = 0.7) {
+        if (map.getLayer(id)) map.removeLayer(id);
+        map.addLayer({
+          id,
+          type: 'fill',
+          source,
+          paint: {
+            'fill-color': colorInterp,
+            'fill-outline-color': outline,
+            'fill-opacity': opacity
+          },
+          layout: { visibility: 'none' }
+        });
+        state.activeLayers[id] = false;
+      }
+      safeAddFillLayer('vegetation', 'veg-source', [
+        'interpolate', ['linear'], ['get', 'density'],
+        0.0, '#e6f7e6',
+        0.5, '#88c988',
+        1.0, '#1a5e1a'
+      ], 'rgba(0,100,0,0.2)', 0.9);
+      safeAddFillLayer('temperature', 'veg-source', [
+        'interpolate', ['linear'], ['get', 'density'],
+        0.0, '#4299e1',   
+        0.5, '#f6e05e',   
+        1.0, '#e53e3e'    
+      ], 'rgba(0,0,0,0.3)', 0.7);
+    })
+    .catch(err => console.error('❌ Failed to load veg_with_density.json:', err));
+}
 window.buildingRegistry = window.buildingRegistry || [];
-
         function renderLayerToggles() {
             const container = document.getElementById('layer-toggles');
             container.innerHTML = layers.map(layer => `
@@ -1066,41 +1687,33 @@ window.buildingRegistry = window.buildingRegistry || [];
                 </div>
             `).join('');
         }
-
         function toggleLayer(layerId) {
     const isActive = state.activeLayers[layerId];
     state.activeLayers[layerId] = !isActive;
     const toggle = document.getElementById(`toggle-${layerId}`);
-
-    if (layerId === 'airQuality') {
-        if (!isActive) {
-            toggle.classList.add('active');
-            map.setLayoutProperty('airQuality', 'visibility', 'visible');
-        } else {
-            toggle.classList.remove('active');
-            map.setLayoutProperty('airQuality', 'visibility', 'none');
-        }
+    if (!map.getLayer(layerId)) {
+        console.warn(`Layer "${layerId}" not found in map.`);
+        return;
+    }
+    if (!isActive) {
+        toggle.classList.add('active');
+        map.setLayoutProperty(layerId, 'visibility', 'visible');
+        showLegend(layerId); 
     } else {
-        // Keep old behavior for other (raster) layers if you add them later
-        if (!isActive) {
-            toggle.classList.add('active');
-            map.setPaintProperty(layerId, 'raster-opacity', 0.5);
-        } else {
-            toggle.classList.remove('active');
-            map.setPaintProperty(layerId, 'raster-opacity', 0);
+        toggle.classList.remove('active');
+        map.setLayoutProperty(layerId, 'visibility', 'none');
+        if (currentLegendId === layerId) {
+            hideLegend(); 
         }
     }
-
     updateActiveLayersDisplay();
 }
         function updateActiveLayersDisplay() {
             const activeLayers = Object.entries(state.activeLayers)
                 .filter(([_, active]) => active)
                 .map(([id, _]) => layers.find(l => l.id === id));
-            
             const container = document.getElementById('active-layers');
             const list = document.getElementById('active-layer-list');
-            
             if (activeLayers.length > 0) {
                 container.style.display = 'block';
                 list.innerHTML = activeLayers.map(layer => 
@@ -1110,59 +1723,92 @@ window.buildingRegistry = window.buildingRegistry || [];
                 container.style.display = 'none';
             }
         }
-
 function renderBuildings() {
   const container = document.getElementById('building-list');
-  container.innerHTML = buildings.map(b => `
-    <div class="building-item"
-         style="padding:8px 10px;border-radius:8px;margin-bottom:6px"
-         draggable="true"
-         data-building-id="${b.id}"
-         onclick="selectBuilding('${b.id}', this)">
-      
-      <div class="building-header" style="gap:8px;margin-bottom:6px;align-items:center;">
-        <span style="font-size:18px;line-height:1;">${b.icon}</span>
-        <span class="building-name" style="font-size:13px;font-weight:600;">${b.name}</span>
-      </div>
-
-      <div class="building-stats"
-           style="display:grid;grid-template-columns:1fr;row-gap:4px;font-size:11px;line-height:1.2;color:#94a3b8;">
-        ${b.pop > 0 ? `<div>👥 Population: +${b.pop}</div>` : ''}
-           <div>💰 Cost: ${b.cost}M</div>
-        <div class="${b.carbon < 0 ? 'stat-positive' : 'stat-negative'}">
-          ${b.carbon < 0 ? '🌱' : '☁️'} Carbon: ${b.carbon > 0 ? '+' : ''}${b.carbon}t
+  const categories = {
+    'Water Sources':   buildings.filter(b => b.type === 'water'),
+    'Energy Producers': buildings.filter(b => b.type === 'energy'),
+    'Money Makers':    buildings.filter(b =>
+                        b.id.includes('commercial') ||
+                        b.id.includes('factory') ||
+                        b.id === 'agri-farm' ||
+                        b.type === 'industrial'
+                        ),
+    'Housing':         buildings.filter(b => b.type === 'housing'),
+    'Services & Green': buildings.filter(b =>
+                            b.id.includes('service') ||
+                            b.id.includes('green') ||
+                            (typeof b.type === 'string' && b.type.includes('civic'))
+                          )
+  };
+  let html = '';
+  Object.entries(categories).forEach(([categoryName, categoryBuildings]) => {
+    if (categoryBuildings.length === 0) return;
+    html += `
+      <div style="margin-top:16px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.5px;padding:8px 0;border-bottom:1px solid #334155;">
+          ${categoryName}
         </div>
-        <div>📏 Height: ${b.height}m</div>
-        
       </div>
-    </div>
-  `).join('');
+    `;
+    categoryBuildings.forEach(b => {
+      html += `
+        <div class="building-item"
+             style="padding:8px 10px;border-radius:8px;margin-bottom:6px"
+             draggable="true"
+             data-building-id="${b.id}"
+             onclick="selectBuilding('${b.id}', this)">
+          <div class="building-header" style="gap:8px;margin-bottom:6px;align-items:center;">
+            <span style="font-size:18px;line-height:1;">${b.icon}</span>
+            <span class="building-name" style="font-size:13px;font-weight:600;">${b.name}</span>
+          </div>
+<div class="building-stats" style="display:grid;grid-template-columns:1fr;row-gap:4px;font-size:11px;line-height:1.2;color:#94a3b8;">
+  ${b.pop > 0 ? `<div>👥 Workers: +${b.pop}</div>` : ''}
+  <div>💰 Cost: ${b.cost}M</div>
+  ${b.air !== 0 ? `
+    <div class="${b.air < 0 ? 'stat-negative' : 'stat-positive'}">
+      ${b.air < 0 ? '☁️ Added air' : '🌿 Removed air'} pollution: ${Math.abs(b.air)}t
+    </div>` : ''}
+  ${b.water !== 0 ? `
+    <div class="${b.water < 0 ? 'stat-negative' : 'stat-positive'}">
+      ${b.water < 0 ? '💧 Needed water' : '💦 Added water'}: ${Math.abs(b.water)}km³
+    </div>` : ''}
+  ${b.energy !== 0 ? `
+    <div class="${b.energy < 0 ? 'stat-negative' : 'stat-positive'}">
+      ${b.energy < 0 ? '🔌 Needed energy' : '🔋 Added energy'}: ${Math.abs(b.energy)}MW
+    </div>` : ''}
+  ${b.money !== 0 ? `
+    <div class="${b.money < 0 ? 'stat-negative' : 'stat-positive'}">
+      ${b.money < 0 ? '💸 Operational cost' : '💵 Revenue'}: ${Math.abs(b.money)}M
+    </div>` : ''}
 
-  // Add drag event listeners
+    ${b.labor !== 0 ? `
+    <div class="${b.labor < 0 ? 'stat-negative' : 'stat-positive'}">
+        ${b.labor < 0 ? '🔨 Needs workers' : '👥 Adds workers'}: ${Math.abs(b.labor)}
+    </div>` : ''}
+
+</div>
+        </div>
+      `;
+    });
+  });
+  container.innerHTML = html;
   document.querySelectorAll('.building-item').forEach(item => {
     item.addEventListener('dragstart', handleDragStart);
     item.addEventListener('dragend', handleDragEnd);
   });
 }
-
-
         function handleDragStart(e) {
             const buildingId = e.currentTarget.getAttribute('data-building-id');
             currentDraggedBuilding = buildings.find(b => b.id === buildingId);
-            
             e.currentTarget.classList.add('dragging');
-            
-            // Create ghost element
             dragGhost = document.createElement('div');
             dragGhost.className = 'drag-ghost';
             dragGhost.textContent = currentDraggedBuilding.icon;
             document.body.appendChild(dragGhost);
-            
-            // Create preview layer on map
             previewLayerId = 'building-preview';
             const dimension = Number.isFinite(currentDraggedBuilding.dimension) 
                 ? Number(currentDraggedBuilding.dimension) : 120;
-            
             map.addSource(previewLayerId, {
                 type: 'geojson',
                 data: {
@@ -1173,7 +1819,6 @@ function renderBuildings() {
                     }
                 }
             });
-            
             map.addLayer({
                 id: previewLayerId,
                 type: 'fill',
@@ -1183,7 +1828,6 @@ function renderBuildings() {
                     'fill-opacity': 0.3
                 }
             });
-            
             map.addLayer({
                 id: previewLayerId + '-outline',
                 type: 'line',
@@ -1194,36 +1838,25 @@ function renderBuildings() {
                     'line-opacity': 0.8
                 }
             });
-            
-            // Update preview on mouse move
             document.addEventListener('dragover', updatePreview);
-            
             e.dataTransfer.effectAllowed = 'copy';
             e.dataTransfer.setData('text/plain', buildingId);
         }
-
         function updatePreview(e) {
             if (dragGhost) {
                 dragGhost.style.left = e.clientX + 'px';
                 dragGhost.style.top = e.clientY + 'px';
             }
-            
-            // Update map preview
             if (previewLayerId && currentDraggedBuilding && map.getSource(previewLayerId)) {
                 const mapEl = map.getContainer();
                 const rect = mapEl.getBoundingClientRect();
-                
-                // Check if mouse is over map
                 if (e.clientX >= rect.left && e.clientX <= rect.right &&
                     e.clientY >= rect.top && e.clientY <= rect.bottom) {
-                    
                     const point = {
                         x: e.clientX - rect.left,
                         y: e.clientY - rect.top
                     };
                     const lngLat = map.unproject(point);
-                    
-                    // Calculate hexagon coordinates
                     const dimension = Number.isFinite(currentDraggedBuilding.dimension) 
                         ? Number(currentDraggedBuilding.dimension) : 120;
                     const widthAcrossFlats = dimension * 50;
@@ -1231,7 +1864,6 @@ function renderBuildings() {
                     const latRad = lngLat.lat * Math.PI / 180;
                     const mToDegLat = m => m / 111320;
                     const mToDegLon = m => m / (111320 * Math.cos(latRad) || 1e-9);
-                    
                     const ring = [30, 90, 150, 210, 270, 330].map(a => {
                         const t = a * Math.PI / 180;
                         const dx = R * Math.cos(t);
@@ -1239,8 +1871,6 @@ function renderBuildings() {
                         return [lngLat.lng + mToDegLon(dx), lngLat.lat + mToDegLat(dy)];
                     });
                     ring.push(ring[0]);
-                    
-                    // Update preview geometry
                     map.getSource(previewLayerId).setData({
                         type: 'Feature',
                         geometry: {
@@ -1251,12 +1881,9 @@ function renderBuildings() {
                 }
             }
         }
-
         function handleDragEnd(e) {
             e.currentTarget.classList.remove('dragging');
             document.removeEventListener('dragover', updatePreview);
-            
-            // Remove preview layers
             if (previewLayerId) {
                 if (map.getLayer(previewLayerId)) {
                     map.removeLayer(previewLayerId);
@@ -1269,73 +1896,53 @@ function renderBuildings() {
                 }
                 previewLayerId = null;
             }
-            
             if (dragGhost && !dragGhost.parentElement) {
-                // Ghost was already removed by drop
             } else if (dragGhost) {
                 dragGhost.remove();
                 dragGhost = null;
             }
         }
-
-
         function selectBuilding(buildingId) {
             const building = buildings.find(b => b.id === buildingId);
             state.selectedBuilding = building;
-            
-            // Visual feedback
             document.querySelectorAll('.building-item').forEach(item => {
                 item.style.borderColor = '#334155';
             });
             event.currentTarget.style.borderColor = '#60a5fa';
-            
             map.getCanvas().style.cursor = 'crosshair';
         }
-        /*Tenzin shit 2*/
-        // Returns buildings within radiusMeters (approximate, for small areas)
-
 function getNearbyBuildings(lngLat, radiusMeters = 500) {
   const nearby = [];
-  const R = 6371000; // Earth radius in meters
-
+  const R = 6371000; 
   for (const placed of state.placedBuildings) {
     const dLat = (placed.lngLat.lat - lngLat.lat) * Math.PI / 180;
     const dLon = (placed.lngLat.lng - lngLat.lng) * Math.PI / 180;
     const lat1 = lngLat.lat * Math.PI / 180;
     const lat2 = placed.lngLat.lat * Math.PI / 180;
-
-    // Haversine formula for accurate short-distance calculation
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
               Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
-
     if (distance <= radiusMeters) {
       nearby.push({ ...placed, distance });
     }
   }
   return nearby.sort((a, b) => a.distance - b.distance);
 }
-// Check if a building would collide with existing buildings
 function checkCollision(lngLat, newBuildingDimension) {
-    const newRadius = (newBuildingDimension * 50) / 2; // Half the width in meters
-    
+    const newRadius = (newBuildingDimension * 50) / 2; 
     for (const placed of state.placedBuildings) {
         const placedRadius = (placed.dimension * 50) / 2;
-        const minDistance = newRadius + placedRadius + 10; // 10m buffer
-        
-        // Calculate distance between centers
-        const R = 6371000; // Earth radius in meters
+        const minDistance = newRadius + placedRadius + 10; 
+        const R = 6371000; 
         const dLat = (placed.lngLat.lat - lngLat.lat) * Math.PI / 180;
         const dLon = (placed.lngLat.lng - lngLat.lng) * Math.PI / 180;
         const lat1 = lngLat.lat * Math.PI / 180;
         const lat2 = placed.lngLat.lat * Math.PI / 180;
-        
         const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                   Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         const distance = R * c;
-        
         if (distance < minDistance) {
             return {
                 collides: true,
@@ -1343,44 +1950,88 @@ function checkCollision(lngLat, newBuildingDimension) {
             };
         }
     }
-    
     return { collides: false };
 }
-
-
-        /*Tenzin shit 2*/
-    
-        // Helper (add once near your other utils)
 function metersToDegreeDeltas(meters, latDeg) {
-  const dLat = meters / 111320; // ~111.32 km per degree of latitude
+  const dLat = meters / 111320; 
   const latRad = latDeg * Math.PI / 180;
   const metersPerDegLon = 111320 * Math.cos(latRad) || 1e-9;
   const dLon = meters / metersPerDegLon;
   return { dLat, dLon };
 }
-
+function demolishBuilding(buildingId) {
+  const idx = state.placedBuildings.findIndex(b => b.id === buildingId);
+  if (idx === -1) {
+    addWarning("Building not found.", 2000);
+    return;
+  }
+  const rec = state.placedBuildings[idx];
+  const buildingDef = buildings.find(b => b.id === rec.type);
+  const demolitionCost = buildingDef ? Math.ceil(buildingDef.cost * 0.3) : 0;
+  if (state.money < demolitionCost) {
+    addWarning(
+      `Not enough money to demolish ${rec.name}. Need $${demolitionCost}M, have $${Math.floor(state.money)}M`, 
+      3000, 'red'
+    );
+    return;
+  }
+  state.money -= demolitionCost;
+  // Return workers to available pool
+    if (buildingDef.labor > 0) {
+        // Was housing, remove population
+        state.population -= buildingDef.labor;
+        state.availableWorkers -= buildingDef.labor;
+    } else if (buildingDef.labor < 0) {
+        // Was employment, free up workers
+        state.employedWorkers -= Math.abs(buildingDef.labor);
+        state.availableWorkers += Math.abs(buildingDef.labor);
+    }
+  if (map.getLayer(buildingId)) {
+    map.removeLayer(buildingId);
+  }
+  if (map.getSource(buildingId)) {
+    map.removeSource(buildingId);
+  }
+  if (rec.marker) {
+    rec.marker.remove();
+  }
+  state.placedBuildings.splice(idx, 1);
+  const regIdx = window.buildingRegistry.findIndex(b => b.id === buildingId);
+  if (regIdx !== -1) {
+    window.buildingRegistry.splice(regIdx, 1);
+  }
+  const popups = document.getElementsByClassName('maplibregl-popup');
+  Array.from(popups).forEach(popup => popup.remove());
+  updateAllMetrics();
+  addWarning(`${rec.name} demolished for $${demolitionCost}M`, 2000, 'blue');
+}
 function showBuildingPopup(buildingId, atLngLat) {
   const rec = window.buildingRegistry.find(b => b.id === buildingId);
   if (!rec) return;
   const ll = atLngLat || rec.lngLat;
-
   const html = `
     <div style="min-width:240px">
       <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px;">
         <span style="font-size:20px">${rec.icon || '🏢'}</span>
         <span>${rec.name || 'Building'}</span>
       </div>
-      <div style="margin-top:8px;font-size:12px;color:#94a3b8;line-height:1.6">
+      <div style="margin-top:GGGGGGHQBU0=BQR8px;font-size:12px;color:#94a3b8;line-height:1.6">
         <div>📍 <b>Lat/Lng:</b> ${ll.lat.toFixed(5)}, ${ll.lng.toFixed(5)}</div>
         <div>📐 <b>Footprint across flats:</b> ${Math.round(rec.dimension * 50)} m</div>
         ${Number.isFinite(rec.air) ? `<div>🌪️ <b>Air pollution (ton):</b> ${rec.air}</div>` : ''}
         ${Number.isFinite(rec.water) ? `<div>💧 <b>Water contributed (m3):</b> ${rec.water}</div>` : ''}
-        ${Number.isFinite(rec.energy) ? `<div>⚡ <b>Energy Using (kW)):</b> ${rec.energy}</div>` : ''}
-        ${Number.isFinite(rec.pop) ? `<div>👥 <b>Population: </b> ${rec.pop} </div>` : ''}
+        ${Number.isFinite(rec.energy) ? `<div>⚡ <b>Energy Using (MW)):</b> ${rec.energy}</div>` : ''}
+        ${Number.isFinite(rec.pop) ? `<div>👥 <b>Workers: </b> ${rec.pop} </div>` : ''}
       </div>
+      <div style="margin-top:10px;">
+        <button
+            onclick="demolishBuilding('${buildingId}')"
+            style="background:#ef4444;color:white;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:12px;">
+            Demolish – $${Math.ceil((buildings.find(b => b.id === rec.type)?.cost || 0) * 0.3)}M
+        </button>
+    </div>
     </div>
   `;
-
   new maplibregl.Popup({ closeOnClick: true })
     .setLngLat([ll.lng, ll.lat])
     .setHTML(html)
@@ -1388,19 +2039,13 @@ function showBuildingPopup(buildingId, atLngLat) {
 }
 async function runAIUrbanAnalysis() {
   try {
-
     const safeList = (window.buildingRegistry || []).map(({ marker, ...rest }) => rest);
-
-    // Turn the array into a string (pretty-printed)
     const data_string = JSON.stringify(safeList, null, 2);
-
     const response = await fetch('/groq', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content: data_string })
     });
-
-    // Optional: read response (remove if you truly want to do nothing else)
     const data = await response.json().catch(() => null);
     console.log('AI response:', data);
     return data["reply"];
@@ -1408,7 +2053,6 @@ async function runAIUrbanAnalysis() {
     console.error('runAIUrbanAnalysis failed:', err);
   }
 }
-
 function createRedIndicator() {
     const el = document.createElement('div');
     el.style.width = '40px';
@@ -1419,87 +2063,129 @@ function createRedIndicator() {
     el.style.animation = 'pulse 0.5s ease-in-out';
     return el;
 }
-
-   // Modified placeBuilding
+let availableWorkers = 0;
 function placeBuilding(building, lngLat) {
     runAIUrbanAnalysis().then(msg => { if (msg) addWarning(msg, 10000); });
-        // Check for collision FIRST
     const buildingDimension = Number.isFinite(building.dimension) ? Number(building.dimension) : 120;
     const collision = checkCollision(lngLat, buildingDimension);
-    
-    if (collision.collides) {
+
+    audioManager.playSFX('build');
+    if (!state.gameStarted) {
+        startGameLoop();
+        addWarning('🎮 Game started! Resources now update every second. Reach 100 sustainability to win!', 8000, 'green');
+    }
+        if (collision.collides) {
         addWarning(`Cannot place ${building.name} here - too close to ${collision.collidingBuilding.name}. Need at least 10m clearance.`, 3500);
-        
-        // Flash red indicator
         const tempMarker = new maplibregl.Marker({ 
             element: createRedIndicator() 
         })
         .setLngLat(lngLat)
         .addTo(map);
-        
         setTimeout(() => tempMarker.remove(), 100);
-        
-        // Reset selection
         state.selectedBuilding = null;
         map.getCanvas().style.cursor = '';
-        return; // Don't place the building
+        return; 
     }
-    
-  // Unique id FIRST so we can bind events to it
-  const buildingId = `building-${Date.now()}`;
+    if (state.water + building.water < 0 ) {
+        addWarning(`Cannot place ${building.name} - water capacity too low, build more reservoirs`, 3500, "red");
+        const tempMarker = new maplibregl.Marker({ 
+            element: createRedIndicator() 
+        })
+        .setLngLat(lngLat)
+        .addTo(map);
+        setTimeout(() => tempMarker.remove(), 100);
+        state.selectedBuilding = null;
+        map.getCanvas().style.cursor = '';
+        return; 
+    }
+    if (state.energy + building.energy < 0) {
+        addWarning(`Cannot place ${building.name} - energy capcity too low, build more energy infrastructure`, 3500, "red");
+        const tempMarker = new maplibregl.Marker({ 
+            element: createRedIndicator() 
+        })
+        .setLngLat(lngLat)
+        .addTo(map);
+        setTimeout(() => tempMarker.remove(), 100);
+        state.selectedBuilding = null;
+        map.getCanvas().style.cursor = '';
+        return; 
+    }
+    // Check worker availability (negative labor means needs workers)
+    if (building.labor < 0 && state.availableWorkers < Math.abs(building.labor)) {
+        const needed = Math.abs(building.labor);
+        addWarning(`Cannot place ${building.name} - need ${needed} workers, only ${Math.floor(state.availableWorkers)} available. Build more housing!`, 3500, "red");
+        const tempMarker = new maplibregl.Marker({ 
+            element: createRedIndicator() 
+        })
+        .setLngLat(lngLat)
+        .addTo(map);
+        setTimeout(() => tempMarker.remove(), 100);
+        state.selectedBuilding = null;
+        map.getCanvas().style.cursor = '';
+        return; 
+    }
+    if (state.money < building.cost) {
+        addWarning(`Not enough money! Need $${building.cost}M, have $${Math.floor(state.money)}M`, 3000, 'red');
+        state.selectedBuilding = null;
+        map.getCanvas().style.cursor = '';
+        return;
+    } else {
+    state.money -= building.cost;
+    }
+    // Update worker counts
+    if (building.labor > 0) {
+        // Housing adds workers
+        state.population += building.labor;
+        state.availableWorkers += building.labor;
+    } else if (building.labor < 0) {
+        // Building employs workers
+        state.availableWorkers -= Math.abs(building.labor);
+        state.employedWorkers += Math.abs(building.labor);
+    }
 
-  // Add marker for the building
+    const isUtility = (building.type === 'water') || (building.type === 'energy');
+
+if (isUtility) {
+  state.infraGraceUntil = Date.now() + 12000; 
+}
+  const buildingId = `building-${Date.now()}`;
   const el = document.createElement('div');
   el.className = 'building-marker';
   el.innerHTML = building.icon;
   el.style.fontSize = '32px';
   el.style.cursor = 'pointer';
   el.title = building.name;
-
   const marker = new maplibregl.Marker({ element: el })
     .setLngLat(lngLat)
     .addTo(map);
-
-  // Show popup when clicking the emoji marker
   el.addEventListener('click', () => showBuildingPopup(buildingId));
-
-  // ✅ Use per-building dimension (meters). Default 120m if not provided.
   const sizeMeters = Number.isFinite(building.dimension) ? Number(building.dimension) : 120;
   const half = sizeMeters * 50 / 2;
-  const { dLat, dLon } = metersToDegreeDeltas(half, lngLat.lat); // (kept in case you reuse)
-
-  // Hexagon footprint (flat-top)
+  const { dLat, dLon } = metersToDegreeDeltas(half, lngLat.lat); 
   const base = sizeMeters;
-  const widthAcrossFlats = base * 50;            // your existing scale factor
-  const R = widthAcrossFlats / Math.sqrt(3);     // hex circumradius
+  const widthAcrossFlats = base * 50;            
+  const R = widthAcrossFlats / Math.sqrt(3);     
   const latRad = lngLat.lat * Math.PI / 180;
   const mToDegLat = m => m / 111320;
   const mToDegLon = m => m / (111320 * Math.cos(latRad) || 1e-9);
-
   const ring = [30, 90, 150, 210, 270, 330].map(a => {
     const t = a * Math.PI / 180;
-    const dx = R * Math.cos(t);   // meters east
-    const dy = R * Math.sin(t);   // meters north
+    const dx = R * Math.cos(t);   
+    const dy = R * Math.sin(t);   
     return [lngLat.lng + mToDegLon(dx), lngLat.lat + mToDegLat(dy)];
   });
-  ring.push(ring[0]); // close polygon
-
+  ring.push(ring[0]); 
   const coords = [ring];
-
-  // Extrusion source
   const heightMeters = Number.isFinite(building.height) ? Number(building.height) : 80;
-
   map.addSource(buildingId, {
     type: 'geojson',
     data: {
       type: 'Feature',
       id: buildingId,
       geometry: { type: 'Polygon', coordinates: coords },
-      properties: { height: heightMeters * 5000 } // your chosen scale
+      properties: { height: heightMeters * 5000 } 
     }
   });
-
-  // Extrusion layer
   map.addLayer({
     id: buildingId,
     type: 'fill-extrusion',
@@ -1511,13 +2197,15 @@ function placeBuilding(building, lngLat) {
       'fill-extrusion-opacity': 0.9
     }
   });
-
-  // Click on the 3D polygon -> popup
   map.on('click', buildingId, (e) => showBuildingPopup(buildingId, e.lngLat));
   map.on('mouseenter', buildingId, () => (map.getCanvas().style.cursor = 'pointer'));
   map.on('mouseleave', buildingId, () => (map.getCanvas().style.cursor = ''));
-
-  // Save record globally and in state
+if (building.type.includes('housing')) {
+    state.population += building.pop;       
+    const nearbyParks = getNearbyBuildings(placed.lngLat, 500)
+        .filter(nb => nb.type === 'green-park');
+    nearbyParksBonus += nearbyParks.length;
+}
   const record = {
     id: buildingId,
     name: building.name,
@@ -1530,96 +2218,42 @@ function placeBuilding(building, lngLat) {
     energy: building.energy,
     pop: building.pop,
     height: heightMeters,
-    dimension: sizeMeters,  // ← This was missing!
+    dimension: sizeMeters,  
     lngLat: { lng: lngLat.lng, lat: lngLat.lat },
     marker
 };
-
   state.placedBuildings.push(record);
-  window.buildingRegistry.push(record); // <— global array
-
-  // Metrics + warnings
+  window.buildingRegistry.push(record); 
   updateMetrics(building);
-
-addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
-
-  // Reset selection
   state.selectedBuilding = null;
   map.getCanvas().style.cursor = '';
   document.querySelectorAll('.building-item').forEach(item => {
     item.style.borderColor = '#334155';
   });
 
-
+ 
 }
-
-
-
         function updateMetrics(building) {
-            // Update population
-            state.population += building.pop;
-            document.getElementById('population').textContent = `${Math.floor(state.population / 1000)}k`;
-            
-          
-            // Update green space
-            if (building.carbon < 0) {
-                state.green += 2;
-                state.air = Math.max(0, state.air - 3);
-            } else if (building.carbon > 200) {
-                state.green = Math.max(0, state.green - 1);
-                state.air = Math.min(500, state.air + 5);
-            }
-            document.getElementById('green').textContent = `${state.green}%`;
-            document.getElementById('air').textContent = state.air;
-            
-            
-            const greenScore = state.green * 1.2;
-            const airScore = Math.max(0, 100 - state.air);
-            
-            
-            
-            document.getElementById('score').textContent = state.score;
-            document.getElementById('score-bar').style.width = `${state.score}%`;
-            
-            // Update score color
-            const scoreEl = document.getElementById('score');
-            if (state.score > 70) {
-                scoreEl.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-            } else if (state.score > 40) {
-                scoreEl.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
-            } else {
-                scoreEl.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
-            }
-            scoreEl.style.webkitBackgroundClip = 'text';
-            scoreEl.style.webkitTextFillColor = 'transparent';
+            updateAllMetrics();
         }
-        /* about the groq api, this is to be change*/
-        
-        /* till here change*/
-
-        function addWarning(message, duration = null) {
-            // Check if this exact message already exists
+        function addWarning(message, duration = null, color = 'yellow') {
             const existingWarning = state.warnings.find(w => w.message === message);
             if (existingWarning) return;
-            
             const warningId = `warning-${Date.now()}`;
             const warningObj = {
                 id: warningId,
                 message: message,
-                timestamp: Date.now()
+                timestamp: Date.now(),
+                color: color  
             };
-            
             state.warnings.push(warningObj);
             updateWarningsDisplay();
-            
-            // If duration is specified, auto-remove after that time
             if (duration && duration > 0) {
                 setTimeout(() => {
                     removeWarning(warningId);
                 }, duration);
             }
         }
-
         function removeWarning(warningId) {
             const index = state.warnings.findIndex(w => w.id === warningId);
             if (index > -1) {
@@ -1627,7 +2261,6 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
                 updateWarningsDisplay();
             }
         }
-        // tenzin shit 1
         async function fetchAIGreeting() {
     try {
         const response = await fetch('/groq', {
@@ -1636,43 +2269,65 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
             body: JSON.stringify({ content: "Just greet the user for now"})
         });
         const data = await response.json()["reply"];
-
-        // Handle Groq API errors (e.g., 400, 429, etc.)
         if (!response.ok || data.error) {
             console.warn('Groq API error:', data);
-            addWarning("Hello! I'm your AI Urban fsadfPlanner. 🌆");
+            addWarning("Hello! I'm your AI Urban Planner. 🌆", color='green');
             return;
         }
-
-        // Extract AI message safely
         const greeting = data.choices?.[0]?.message?.content?.trim() || "Hello! I'm your AI Urban Pladdfassadfnner. 🌆";
-        // Clean up quotes or extra whitespace
         const cleanGreeting = greeting.replace(/^["'\n]+|["'\n]+$/g, '');
-        // Enforce length limit
         const finalGreeting = cleanGreeting.length > 80 
             ? cleanGreeting.substring(0, 77) + "..." 
             : cleanGreeting;
-
         addWarning(finalGreeting);
     } catch (err) {
         console.error('AI greeting failed:', err);
-        addWarning("Hello! I'm your AI Urban Planner. 🌆");
+        addWarning("Hello! I'm your AI Urban Planner. 🌆", color='green');
     }
 }
-        
         function updateWarningsDisplay() {
             const container = document.getElementById('warnings');
             const list = document.getElementById('warning-list');
-            
             if (state.warnings.length > 0) {
                 container.style.display = 'block';
                 list.innerHTML = state.warnings.map(warning => {
-                    // Handle both old string format and new object format
                     const message = typeof warning === 'string' ? warning : warning.message;
-                    
+                    const color = warning.color || 'yellow';
+                    const colorSchemes = {
+                        yellow: {
+                            bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%)',
+                            border: '#f59e0b',
+                            icon: '#fbbf24'
+                        },
+                        red: {
+                            bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.3) 100%)',
+                            border: '#ef4444',
+                            icon: '#f87171'
+                        },
+                        blue: {
+                            bg: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.2) 100%)',
+                            border: '#3b82f6',
+                            icon: '#60a5fa'
+                        },
+                        green: {
+                            bg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%)',
+                            border: '#10b981',
+                            icon: '#34d399'
+                        }
+                    };
+                    const scheme = colorSchemes[color] || colorSchemes.yellow;
                     return `
-                        <div class="warning-item">
-                            <svg class="warning-icon" style="width: 20px; height: 20px; flex-shrink: 0;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="warning-item" style="
+                            background: ${scheme.bg};
+                            border: 1px solid ${scheme.border};
+                            border-radius: 8px;
+                            padding: 14px;
+                            margin-bottom: 10px;
+                            display: flex;
+                            gap: 12px;
+                            animation: slideIn 0.4s ease;
+                        ">
+                            <svg class="warning-icon" style="width: 20px; height: 20px; flex-shrink: 0; color: ${scheme.icon};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
                             <div style="font-size: 13px; line-height: 1.5;">${message}</div>
@@ -1683,11 +2338,8 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
                 container.style.display = 'none';
             }
         }
-        
-
         function resetSimulation() {
             if (confirm('Reset entire simulation? This will clear all placed buildings.')) {
-                // Remove all placed buildings
                 state.placedBuildings.forEach(item => {
                     if (map.getLayer(item.id)) {
                         map.removeLayer(item.id);
@@ -1696,30 +2348,40 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
                         map.removeSource(item.id);
                     }
                 });
-                
-                // Reset state
                 state = {
-                    score: 72,
-                    carbon: 118000,
-                    green: 22,
-                    air: 42,
-                    population: 842000,
+                    money: 2000,
+                    energy: 0,
+                    water: 0,
+                    population: 100000,
+                    availableWorkers: 90000,
+                    employedWorkers: 0,
+                    housingCapacity: 0,
+                    happiness: 50,
+                    difficulty: 'easy',
+                    moneyRate: 0,
+                    energyRate: 0,
+                    waterRate: 0,
+                    populationRate: 0,
+                    airRate: 0,
+                    score: 0,
+                    green: 0,
+                    air: 0,
                     activeLayers: {},
                     placedBuildings: [],
-                    warnings: []
+                    warnings: [],
+                    gameStarted: false,
+                    tickInterval: null,
+                    lastBlackoutWarning: 0,
+                    lastWorkerWarning: 0
                 };
-                
-                // Update UI
+                availableWorkers = 0;
                 document.getElementById('score').textContent = state.score;
                 document.getElementById('score-bar').style.width = `${state.score}%`;
                 document.getElementById('carbon').textContent = `${Math.floor(state.carbon / 1000)}k`;
                 document.getElementById('green').textContent = `${state.green}%`;
                 document.getElementById('air').textContent = state.air;
                 document.getElementById('population').textContent = `${Math.floor(state.population / 1000)}k`;
-                
                 updateWarningsDisplay();
-                
-                // Reset map view
                 map.flyTo({
                     center: TOKYO_CENTER,
                     zoom: 13,
@@ -1729,25 +2391,19 @@ addBuildingInstance(building.id, lngLat.lat, lngLat.lng, record);
                 });
             }
         }
-
         function generateReport() {
             const report = `
 TOKYO URBAN PLANNING REPORT
 Generated: ${new Date().toLocaleString()}
-
 ═══════════════════════════════════════
-
 SUSTAINABILITY METRICS
 Overall Score: ${state.score}/100
 Green Space Ratio: ${state.green}%
 Air Quality Index: ${state.air}
-Population: ${Math.floor(state.population / 1000)}k
-
+Workers: ${Math.floor(state.population / 1000)}k
 ═══════════════════════════════════════
-
 INFRASTRUCTURE SUMMARY
 Total Buildings Placed: ${state.placedBuildings.length}
-
 Residential: ${state.placedBuildings.filter(b => b.building.id.includes('residential')).length}
 Commercial: ${state.placedBuildings.filter(b => b.building.id.includes('commercial')).length}
 Industrial: ${state.placedBuildings.filter(b => b.building.id.includes('industrial')).length}
@@ -1755,14 +2411,10 @@ Services: ${state.placedBuildings.filter(b => b.building.id.includes('service'))
 Transportation: ${state.placedBuildings.filter(b => b.building.id.includes('transport')).length}
 Green Spaces: ${state.placedBuildings.filter(b => b.building.id.includes('green')).length}
 Energy: ${state.placedBuildings.filter(b => b.building.id.includes('energy')).length}
-
 ═══════════════════════════════════════
-
 CURRENT WARNINGS
 ${state.warnings.length > 0 ? state.warnings.map((w, i) => `${i + 1}. ${w}`).join('\n') : 'No active warnings'}
-
 ═══════════════════════════════════════
-
 RECOMMENDATIONS
 ${state.score > 80 ? '✓ Excellent sustainability! Maintain current practices.' : ''}
 ${state.score <= 80 && state.score > 60 ? '• Consider adding more green spaces to improve air quality.' : ''}
@@ -1770,20 +2422,14 @@ ${state.score <= 60 ? '⚠ Critical improvements needed. Focus on reducing carbo
 ${state.green < 20 ? '⚠ Increase green space ratio to at least 25% for healthy urban environment.' : ''}
 ${state.air > 70 ? '⚠ Air quality requires immediate attention. Add parks and reduce industrial emissions.' : ''}
             `.trim();
-            
             alert(report);
             console.log(report);
         }
-
-        // Draggable/Resizable overlays
         function makeDraggable(elementId) {
             const element = document.getElementById(elementId);
             const header = document.getElementById(`${elementId}-header`);
-            
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            
             header.onmousedown = dragMouseDown;
-            
             function dragMouseDown(e) {
                 e.preventDefault();
                 pos3 = e.clientX;
@@ -1791,7 +2437,6 @@ ${state.air > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
                 document.onmouseup = closeDragElement;
                 document.onmousemove = elementDrag;
             }
-            
             function elementDrag(e) {
                 e.preventDefault();
                 pos1 = pos3 - e.clientX;
@@ -1803,40 +2448,117 @@ ${state.air > 70 ? '⚠ Air quality requires immediate attention. Add parks and 
                 element.style.bottom = 'auto';
                 element.style.right = 'auto';
             }
-            
             function closeDragElement() {
                 document.onmouseup = 0;
                 document.onmousemove = 0;
             }
         }
-
+        function addMetricTooltips() {
+            const createTooltip = (text) => {
+                const tooltip = document.createElement('div');
+                tooltip.style.position = 'fixed';
+                tooltip.style.background = 'rgba(0, 0, 0, 0.9)';
+                tooltip.style.color = 'white';
+                tooltip.style.padding = '8px 12px';
+                tooltip.style.borderRadius = '6px';
+                tooltip.style.fontSize = '12px';
+                tooltip.style.zIndex = '10000';
+                tooltip.style.pointerEvents = 'none';
+                tooltip.style.whiteSpace = 'pre-line';
+                tooltip.style.maxWidth = '300px';
+                tooltip.innerHTML = text;
+                return tooltip;
+            };
+            const metrics = [
+                { id: 'money', key: 'money' },
+                { id: 'water', key: 'water' },
+                { id: 'energy', key: 'energy' },
+                { id: 'happiness', key: 'happiness' },
+                { id: 'aqi', key: 'co2' },
+                { id: 'population', key: 'population' }
+            ];
+            metrics.forEach(metric => {
+                const element = document.getElementById(metric.id);
+                if (!element) return;
+                const box = element.parentElement;
+                let currentTooltip = null;
+                box.addEventListener('mouseenter', function(e) {
+                    if (!state.breakdowns) return;
+                    let breakdown = [];
+                    if (metric.key === 'money') breakdown = state.breakdowns.money || [];
+                    else if (metric.key === 'energy') breakdown = state.breakdowns.energy || [];
+                    else if (metric.key === 'water') breakdown = state.breakdowns.water || [];
+                    else if (metric.key === 'happiness') breakdown = state.breakdowns.happiness || [];
+                    else if (metric.key === 'co2') breakdown = state.breakdowns.co2 || [];
+                    if (breakdown.length === 0) return;
+                    const text = breakdown.map(item => {
+                        const val = item.value >= 0 ? `+${item.value.toFixed(2)}` : item.value.toFixed(2);
+                        return `${item.name}: ${val}`;
+                    }).join('\n');
+                    currentTooltip = createTooltip(text);
+                    document.body.appendChild(currentTooltip);
+                    const updatePosition = (ev) => {
+                        currentTooltip.style.left = (ev.clientX + 15) + 'px';
+                        currentTooltip.style.top = (ev.clientY + 15) + 'px';
+                    };
+                    updatePosition(e);
+                    box.addEventListener('mousemove', updatePosition);
+                    box._updatePosition = updatePosition;
+                });
+                box.addEventListener('mouseleave', function() {
+                    if (currentTooltip) {
+                        currentTooltip.remove();
+                        currentTooltip = null;
+                    }
+                    if (box._updatePosition) {
+                        box.removeEventListener('mousemove', box._updatePosition);
+                    }
+                });
+            });
+        }
         function toggleMinimize(elementId) {
             const element = document.getElementById(elementId);
             element.classList.toggle('minimized');
-            
             const btn = element.querySelector('.overlay-btn');
             btn.textContent = element.classList.contains('minimized') ? '+' : '−';
         }
-    function initCatalogCollapse() {
-        const catalog = document.getElementById('top-catalog');
-        const header = document.getElementById('catalog-header');
-        
-        if (!catalog || !header) return;
-
-        header.addEventListener('click', () => {
-            catalog.classList.toggle('collapsed');
-        });
-    }
-
+        function initCatalogCollapse() {
+            const catalog = document.getElementById('top-catalog');
+            const header = document.getElementById('catalog-header');
+            if (!catalog || !header) return;
+            header.addEventListener('click', () => {
+                catalog.classList.toggle('collapsed');
+            });
+        }
+        function showInstructions() {
+            document.getElementById('overlay-bg').style.display = 'block';
+            document.getElementById('instructions').style.display = 'block';
+        }
+        function hideInstructions() {
+            document.getElementById('overlay-bg').style.display = 'none';
+            document.getElementById('instructions').style.display = 'none';
+        }
+        function setDifficulty(level) {
+            state.difficulty = level;
+            }
         window.addEventListener('load', () => {
             initMap();
             renderLayerToggles();
             renderBuildings();
             makeDraggable('warnings');
             makeDraggable('active-layers');
-            initCatalogCollapse(); // Make sure this line exists
+            initCatalogCollapse(); 
+            updateAllMetrics();
+            addMetricTooltips();
         });
-
     </script>
+    <div id="legend-container" 
+     style="position: absolute; 
+            top: 230px;        
+            right: 10px; 
+            z-index: 1000; 
+            font-family: sans-serif;
+            pointer-events: none;">
+</div>
 </body>
 </html>

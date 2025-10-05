@@ -1,55 +1,66 @@
-import numpy as np
 import json
+import random
 
-# === CONFIG ===
-output_file = "temperature.json"
+# --- Configuration ---
+INPUT_GEOJSON = 'veg.json'
+OUTPUT_GEOJSON = 'temperature.json'
 
-# East Asia bounds (same as your AOD)
-min_lat, max_lat = 20.0, 50.0
-min_lon, max_lon = 120.0, 150.0
+# Temperature range (°C)
+TEMP_NORTH = 5    # Hokkaido cold
+TEMP_SOUTH = 32   # Okinawa hot
+NOISE_RANGE = 2   # ±2°C random noise
 
-# Resolution (0.1° ≈ 11 km)
-resolution = 0.01
+# Density optional (like your previous veg_with_density)
+USE_DENSITY = True
 
-# === GENERATE GRID ===
-lats = np.arange(min_lat, max_lat + resolution, resolution)
-lons = np.arange(min_lon, max_lon + resolution, resolution)
-
-data_points = []
-
-# Simulate realistic surface temperature (in Kelvin)
-# Base: 288K (15°C) + seasonal + urban heat island + elevation effects
-for lat in lats:
-    for lon in lons:
-        # Base temperature (warmer near equator)
-        base_temp = 305 - (lat - 20) * 0.3  # ~305K at 20°N, cooler north
-        
-        # Urban heat island (Tokyo area hotter)
-        dist_to_tokyo = np.sqrt((lat - 35.68)**2 + (lon - 139.76)**2)
-        urban_boost = max(0, 8 * np.exp(-dist_to_tokyo / 2.0))  # up to +8K near Tokyo
-        
-        # Add small noise for realism
-        noise = np.random.normal(0, 0.5)
-        
-        temp_k = base_temp + urban_boost + noise
-        temp_k = np.clip(temp_k, 270, 320)  # reasonable range: -3°C to 47°C
-        
-        data_points.append({
-            "lat": round(float(lat), 4),
-            "lon": round(float(lon), 4),
-            "temp": round(float(temp_k), 2)
-        })
-
-# === SAVE ===
-output = {
-    "date": "2025-09-01",
-    "source": "Landsat 8 Surface Temperature",
-    "variable": "Surface Temperature (K)",
-    "data": data_points
+URBAN_PREFECTURES = {
+    '東京都', '大阪府', '神奈川県', '愛知県', '埼玉県', '千葉県', '兵庫県', '北海道'
+}
+FORESTED_PREFECTURES = {
+    '京都府', '奈良府', '長野県', '岐阜県', '高知県', '島根県', '栃木県',
+    '群馬県', '福井県', '和歌山県', '宮崎県', '熊本県', '大分県'
 }
 
-with open(output_file, 'w') as f:
-    json.dump(output, f, indent=2)
+# --- Load GeoJSON ---
+with open(INPUT_GEOJSON, 'r', encoding='utf-8') as f:
+    data = json.load(f)
 
-print(f"✅ Generated {len(data_points)} temperature points")
-print(f"📁 Saved to: {output_file}")
+for feature in data['features']:
+    # --- Compute centroid latitude for MultiPolygon safely ---
+    coords_list = feature['geometry']['coordinates']
+    all_points = []
+
+    for polygon in coords_list:
+        for ring in polygon:
+            for pt in ring:
+                if isinstance(pt, list) and len(pt) >= 2:
+                    all_points.append(pt)
+
+    if all_points:
+        lat = sum(pt[1] for pt in all_points) / len(all_points)
+    else:
+        lat = 35.0  # fallback latitude
+
+    # --- Map latitude to temperature (north→south) ---
+    temp = ((lat - 24) / (45 - 24)) * (TEMP_SOUTH - TEMP_NORTH) + TEMP_NORTH
+    temp += random.uniform(-NOISE_RANGE, NOISE_RANGE)
+    feature['properties']['temperature'] = round(temp, 1)
+
+    # --- Optional: add density for vegetation-style visualization ---
+    if USE_DENSITY:
+        name = feature['properties'].get('nam_ja') or feature['properties'].get('nam')
+        if name in URBAN_PREFECTURES:
+            base = 0.1
+        elif name in FORESTED_PREFECTURES:
+            base = 0.7
+        else:
+            base = 0.4  # medium for others
+        noise = random.uniform(-0.15, 0.15)
+        density = max(0.05, min(0.9, base + noise))
+        feature['properties']['density'] = round(density, 2)
+
+# --- Save new GeoJSON ---
+with open(OUTPUT_GEOJSON, 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+
+print(f"✅ Generated '{OUTPUT_GEOJSON}' with temperature and density for {len(data['features'])} features.")

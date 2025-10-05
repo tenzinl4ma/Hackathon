@@ -1,31 +1,33 @@
 const buildings = [
-  // ——— Residential ———
+  // ——— Residential (ADD population) ———
   {
     id: 'residential-high-complex',
-    type: 'residential',
+    type: 'housing',
     name: 'High-Rise Complex',
     icon: '🏙️',
     cost: 900,
-    money: 10,                 // generates small income per sec
-    water: -72000,             // uses water
-    air: -4500,                // emits pollution
-    energy: -250000,           // consumes energy
-    pop: 1800,
+    money: 0,
+    water: -7200,
+    air: -30,
+    energy: -25000,
+    pop: 7000,
+    labor: 7000,  // ADDS workers
     height: 12,
     dimension: 300,
     color: '#3b82f6'
   },
   {
     id: 'residential-suburb',
-    type: 'residential',
+    type: 'housing',
     name: 'Suburb',
     icon: '🏘️',
     cost: 180,
-    money: 8,
-    water: -72000,
-    air: -6000,
-    energy: -720000,
-    pop: 800,
+    money: 0,
+    water: -7200,
+    air: -40,
+    energy: -72000,
+    pop: 5000,
+    labor: 5000,  // ADDS workers
     height: 3,
     dimension: 750,
     color: '#3b82f6'
@@ -39,13 +41,30 @@ const buildings = [
     icon: '🏫',
     cost: 120,
     money: -2,
-    water: -10000,
-    air: -400,
-    energy: -300,
+    water: -1000,
+    air: -2,
+    energy: -30,
     pop: 0,
+    labor: -500,  // NEEDS workers (teachers)
     height: 4,
     dimension: 400,
     color: '#a855f7'
+  },
+  {
+    id: 'service-hospital',
+    type: 'civic',
+    name: 'Hospital',
+    icon: '🏥',
+    cost: 200,
+    money: -3,
+    water: -2000,
+    air: -5,
+    energy: -50,
+    pop: 0,
+    labor: -800,  // NEEDS workers (doctors/nurses)
+    height: 5,
+    dimension: 400,
+    color: '#ef4444'
   },
   {
     id: 'green-park',
@@ -54,10 +73,27 @@ const buildings = [
     icon: '🌳',
     cost: 60,
     money: -1,
-    water: -50000,             // irrigation use
-    air: 200,                  // cleans air
-    energy: -20,
+    water: -5000,
+    air: 20,
+    energy: -2,
     pop: 0,
+    labor: -50,  // NEEDS workers (maintenance)
+    height: 1,
+    dimension: 600,
+    color: '#10b981'
+  },
+  {
+    id: 'green-parkc',
+    name: 'Bike Lane Network',
+    icon: '🚴‍♂️',
+    type: 'green',
+    cost: 500,
+    energy: 0,
+    water: 0,
+    air: -250,
+    pop: 0,
+    money: 0,
+    labor: -100,  // NEEDS workers (maintenance)
     height: 1,
     dimension: 600,
     color: '#10b981'
@@ -69,12 +105,13 @@ const buildings = [
     type: 'water',
     name: 'Great Reservoir',
     icon: '💦',
-    cost: 1400,
+    cost: 600,
     money: -3,
-    water: 20000000,           // supplies water
-    air: 100,
+    water: 20000,
+    air: 10,
     energy: 0,
     pop: 0,
+    labor: -200,  // NEEDS workers (operators)
     height: 0.5,
     dimension: 850,
     color: '#60a5fa'
@@ -84,12 +121,13 @@ const buildings = [
     type: 'water',
     name: 'Small Reservoir',
     icon: '💧',
-    cost: 320,
+    cost: 200,
     money: -1,
-    water: 5000000,
-    air: 30,
+    water: 5000,
+    air: 3,
     energy: 0,
     pop: 0,
+    labor: -50,  // NEEDS workers
     height: 0.5,
     dimension: 350,
     color: '#60a5fa'
@@ -101,16 +139,33 @@ const buildings = [
     icon: '🌾🍚',
     cost: 100,
     money: 6,
-    water: -1000000,
-    air: 500,                  // slight sequestration
-    energy: -200,
+    water: -10000,
+    air: 10,
+    energy: -20,
     pop: 0,
+    labor: -500,  // NEEDS workers (farmers)
     height: 1,
     dimension: 1000,
     color: '#84cc16'
   },
 
   // ——— Energy ———
+  {
+    id: 'energy-coal-plant',
+    type: 'energy',
+    name: 'Coal Power Plant',
+    icon: '⚡',
+    cost: 160,
+    money: 0,
+    water: -2500,
+    air: -20,
+    energy: 100000,
+    pop: 0,
+    labor: -300,  // NEEDS workers (operators)
+    height: 2,
+    dimension: 300,
+    color: '#ef4444'
+  },
   {
     id: 'energy-wind-farm',
     type: 'energy',
@@ -119,9 +174,10 @@ const buildings = [
     cost: 420,
     money: -2,
     water: 0,
-    air: 60000,                // cleans air (avoided pollution)
-    energy: 120000,            // produces clean energy
+    air: 0,
+    energy: 12000,
     pop: 0,
+    labor: -150,  // NEEDS workers
     height: 2,
     dimension: 450,
     color: '#efefef'
@@ -133,10 +189,11 @@ const buildings = [
     icon: '⚡',
     cost: 1300,
     money: -8,
-    water: 5000000,            // adds secure supply
+    water: 5000,
     air: 0,
-    energy: 2000000,           // large generation
+    energy: 200000,
     pop: 0,
+    labor: -400,  // NEEDS workers
     height: 2,
     dimension: 600,
     color: '#99c0e3'
@@ -148,28 +205,14 @@ const buildings = [
     icon: '⚡',
     cost: 300,
     money: -1,
-    water: -1000,
+    water: -100,
     air: 0,
     energy: 20000,
     pop: 0,
+    labor: -100,  // NEEDS workers
     height: 4,
     dimension: 100,
     color: '#fde047'
-  },
-  {
-    id: 'energy-coal-plant',
-    type: 'energy',
-    name: 'Coal Power Plant',
-    icon: '⚡',
-    cost: 160,
-    money: 40,
-    water: -3000000,
-    air: -1000000,
-    energy: 500000,
-    pop: 0,
-    height: 2,
-    dimension: 300,
-    color: '#ef4444'
   },
 
   // ——— Industry ———
@@ -179,10 +222,11 @@ const buildings = [
     name: 'Standard Factory',
     icon: '🏭',
     cost: 140,
-    money: 35,
-    water: -300000,
-    air: -400000,
-    energy: -150000,
+    money: 10,
+    water: -2000,
+    air: -30,
+    energy: -25000,
+    labor: -2000,  // NEEDS workers
     pop: 0,
     height: 3,
     dimension: 500,
@@ -194,10 +238,11 @@ const buildings = [
     name: 'Sustainable Factory',
     icon: '🌲🏭',
     cost: 260,
-    money: 20,
-    water: -120000,
-    air: -50000,
-    energy: -50000,
+    money: 5,
+    water: -1200,
+    air: -15,
+    energy: -25000,
+    labor: -2000,  // NEEDS workers
     pop: 0,
     height: 3,
     dimension: 500,
@@ -211,10 +256,11 @@ const buildings = [
     name: 'Commercial District',
     icon: '💰',
     cost: 350,
-    money: 25,
-    water: -100000,
-    air: -3000,
-    energy: -60000,
+    money: 5,
+    water: -1000,
+    air: -10,
+    energy: -40000,
+    labor: -10000,  // NEEDS workers
     pop: 0,
     height: 6,
     dimension: 400,
