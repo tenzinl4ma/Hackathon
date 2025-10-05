@@ -9,7 +9,7 @@ min_lat, max_lat = 20.0, 50.0
 min_lon, max_lon = 120.0, 150.0
 
 # Resolution (0.1° ≈ 11 km)
-resolution = 0.1
+resolution = 0.01
 
 # === GENERATE GRID ===
 lats = np.arange(min_lat, max_lat + resolution, resolution)
