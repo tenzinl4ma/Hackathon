@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 app = Flask(__name__)
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")  # set this in your env
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")  # set
 
 # mimetypes.add_type('audio/mpeg', '.mp3')
 # mimetypes.add_type('audio/ogg', '.ogg')

@@ -1,66 +1,98 @@
+import xarray as xr
+import numpy as np
 import json
-import random
+from scipy.interpolate import griddata
 
-# --- Configuration ---
-INPUT_GEOJSON = 'veg.json'
-OUTPUT_GEOJSON = 'temperature.json'
 
-# Temperature range (°C)
-TEMP_NORTH = 5    # Hokkaido cold
-TEMP_SOUTH = 32   # Okinawa hot
-NOISE_RANGE = 2   # ±2°C random noise
+input_nc = "MERRA2_400.tavg1_2d_aer_Nx.20250901.nc4"
+output_json = "aod.json"
 
-# Density optional (like your previous veg_with_density)
-USE_DENSITY = True
+# japan
+min_lat, max_lat = 20.0, 50.0
+min_lon, max_lon = 120.0, 150.0
 
-URBAN_PREFECTURES = {
-    '東京都', '大阪府', '神奈川県', '愛知県', '埼玉県', '千葉県', '兵庫県', '北海道'
+# data res
+resolution = 0.1
+
+# main program
+print("Loading NetCDF file...")
+ds = xr.open_dataset(input_nc)
+
+
+var_name = 'TOTEXTTAU'
+if var_name not in ds:
+    raise KeyError(f"'{var_name}' not found. Available: {list(ds.data_vars)}")
+
+aod = ds[var_name]
+if 'time' in aod.dims:
+    aod = aod.isel(time=0)  # clock
+
+lat = ds['lat'].values
+lon = ds['lon'].values
+
+# grid
+LON, LAT = np.meshgrid(lon, lat)
+AOD = aod.values
+
+
+flat_lat = LAT.ravel()
+flat_lon = LON.ravel()
+flat_aod = AOD.ravel()
+
+mask = (
+    (flat_lat >= min_lat) &
+    (flat_lat <= max_lat) &
+    (flat_lon >= min_lon) &
+    (flat_lon <= max_lon) &
+    np.isfinite(flat_aod) &
+    (flat_aod >= 0)
+)
+
+lats = flat_lat[mask]
+lons = flat_lon[mask]
+aods = flat_aod[mask]
+
+print("Interpolating to dense grid...")
+grid_lats = np.arange(min_lat, max_lat + resolution, resolution)
+grid_lons = np.arange(min_lon, max_lon + resolution, resolution)
+
+GRID_LON, GRID_LAT = np.meshgrid(grid_lons, grid_lats)
+grid_points = np.column_stack([GRID_LAT.ravel(), GRID_LON.ravel()])
+
+interpolated_aod = griddata(
+    points=np.column_stack([lats, lons]),
+    values=aods,
+    xi=grid_points,
+    method='linear',
+    fill_value=np.nan
+)
+
+# sanity
+valid = ~np.isnan(interpolated_aod)
+dense_lat = grid_points[valid, 0]
+dense_lon = grid_points[valid, 1]
+dense_aod = interpolated_aod[valid]
+
+# data
+data_points = [
+    {
+        "lat": round(float(lat_val), 4),
+        "lon": round(float(lon_val), 4),
+        "aod": round(float(aod_val), 4)
+    }
+    for lat_val, lon_val, aod_val in zip(dense_lat, dense_lon, dense_aod)
+]
+
+
+output = {
+    "date": "2025-09-01",
+    "source": "MERRA-2 tavg1_2d_aer_Nx",
+    "variable": "TOTEXTTAU (Total AOD at 550nm)",
+    "data": data_points
 }
-FORESTED_PREFECTURES = {
-    '京都府', '奈良府', '長野県', '岐阜県', '高知県', '島根県', '栃木県',
-    '群馬県', '福井県', '和歌山県', '宮崎県', '熊本県', '大分県'
-}
 
-# --- Load GeoJSON ---
-with open(INPUT_GEOJSON, 'r', encoding='utf-8') as f:
-    data = json.load(f)
 
-for feature in data['features']:
-    # --- Compute centroid latitude for MultiPolygon safely ---
-    coords_list = feature['geometry']['coordinates']
-    all_points = []
+with open(output_json, 'w') as f:
+    json.dump(output, f, indent=2)
 
-    for polygon in coords_list:
-        for ring in polygon:
-            for pt in ring:
-                if isinstance(pt, list) and len(pt) >= 2:
-                    all_points.append(pt)
-
-    if all_points:
-        lat = sum(pt[1] for pt in all_points) / len(all_points)
-    else:
-        lat = 35.0  # fallback latitude
-
-    # --- Map latitude to temperature (north→south) ---
-    temp = ((lat - 24) / (45 - 24)) * (TEMP_SOUTH - TEMP_NORTH) + TEMP_NORTH
-    temp += random.uniform(-NOISE_RANGE, NOISE_RANGE)
-    feature['properties']['temperature'] = round(temp, 1)
-
-    # --- Optional: add density for vegetation-style visualization ---
-    if USE_DENSITY:
-        name = feature['properties'].get('nam_ja') or feature['properties'].get('nam')
-        if name in URBAN_PREFECTURES:
-            base = 0.1
-        elif name in FORESTED_PREFECTURES:
-            base = 0.7
-        else:
-            base = 0.4  # medium for others
-        noise = random.uniform(-0.15, 0.15)
-        density = max(0.05, min(0.9, base + noise))
-        feature['properties']['density'] = round(density, 2)
-
-# --- Save new GeoJSON ---
-with open(OUTPUT_GEOJSON, 'w', encoding='utf-8') as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
-
-print(f"✅ Generated '{OUTPUT_GEOJSON}' with temperature and density for {len(data['features'])} features.")
+print("done")

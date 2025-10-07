@@ -10,3 +10,4 @@ env/
 ..ali/
 static/MERRA2_400.tavg1_2d_aer_Nx.20250901.nc4
 ./static/MERRA2_400.tavg1_2d_aer_Nx.20250901.nc4
+.DS_Store
